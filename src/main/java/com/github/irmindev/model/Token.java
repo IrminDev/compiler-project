@@ -90,7 +90,7 @@ public sealed abstract class Token permits
         private final int line;
         private final Object literal;
 
-        public KnownValueToken(TokenType type, int line, Object literal) {
+        public KnownValueToken(TokenType type, Object literal, int line) {
             super(type);
             this.line = line;
             this.literal = literal;
