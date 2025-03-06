@@ -1,0 +1,13 @@
+// Multiplicacion
+var a = 5E3*19;
+print(a);
+
+/*
+    Comentario multilinea
+*/
+
+var msg = "Hola mundo";
+
+if(1 >= a){
+    print "Si jala profe"
+}

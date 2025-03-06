@@ -1,6 +1,8 @@
 package com.github.irmindev;
 import java.io.*;
-import java.util.stream.Stream;
+
+import com.github.irmindev.controller.Lexer;
+import com.github.irmindev.model.Token;
 
 public class REPL {
     public static void main(String[] args) {
@@ -14,15 +16,15 @@ public class REPL {
                     System.out.print(">> ");
                 }
             } catch (Exception e) {
-                System.out.println(e.getMessage());
+                e.printStackTrace();
             } finally {
                 closeStream(reader);
             }
         } else if (args.length == 1) {
             try {
-                execute(readFile(args[0]).lines());
+                execute(readFile(args[0]));
             } catch (Exception e) {
-                System.out.println(e.getMessage());
+                e.printStackTrace();
             }
         } else {
             throw new IllegalArgumentException();
@@ -30,21 +32,16 @@ public class REPL {
     }
 
     private static void execute(String s) {
-        System.out.println(s);
-    }
-
-    private static void execute(Stream<String> lines) {
-        lines.forEach(System.out::println);
+        Lexer lexer = new Lexer(s);
+        lexer.scanTokens().forEach(Token::printToken);
     }
 
     public static String readFile(String path) throws FileNotFoundException {
         InputStream input = null;
         String content = null;
-
+    
         try {
-            input = REPL.class.getClassLoader().getResourceAsStream(path);
-            if (input == null) throw new FileNotFoundException("File " + path + " not found");
-
+            input = new FileInputStream(path); // Use FileInputStream for absolute path
             byte[] buffer = input.readAllBytes();
             content = new String(buffer);
         } catch (Exception e) {
@@ -52,7 +49,7 @@ public class REPL {
         } finally {
             closeStream(input);
         }
-
+    
         return content;
     }
 

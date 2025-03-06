@@ -14,9 +14,8 @@ public class Lexer {
   private int current = 0;
   private int line = 1;
 
-  // private final Set<Character> singleCharTokens = Set.of('(', ')', '{', '}',
-  // ',', '-', '+', ';', '*', '/', '!', '=',
-  // '<', '>');
+  private final Set<Character> singleCharTokens = Set.of('(', ')', '{', '}',
+  ',', '-', '+', ';', '*', '/', '!', '='); 
 
   private final Set<Character> whiteSpaces = Set.of(' ', '\r', '\t', '\n');
 
@@ -52,8 +51,6 @@ public class Lexer {
       } else {
         throw new UnexpectedSymbolException(peek(), line);
       }
-
-      advance();
     }
 
     tokens.add(new Token.EOFToken(TokenType.EOF, "$"));
@@ -70,7 +67,7 @@ public class Lexer {
    */
   private Token alphLexeme() {
     int start = current;
-    while (Character.isAlphabetic(peekNext()) || Character.isDigit(peekNext())) {
+    while (Character.isAlphabetic(peek()) || Character.isDigit(peek())) {
       advance();
     }
     String text = source.substring(start, current);
@@ -133,16 +130,19 @@ public class Lexer {
     }
 
     // Transición a Estado 1: verifico si hay punto decilam
-    if (peek() == '.' && Character.isDigit(peekNext())) { // Se confirma que es un decimal.
-      advance(); // Consumo el punto.
-
-      while (Character.isDigit(peek())) { // Leo los dígitos después del punto.
-        advance();
+    if (peek() == '.' ) { // Se confirma que es un decimal.
+      if(Character.isDigit(peekNext())){
+        advance(); // Consume el punto.
+        while (Character.isDigit(peek())) { // Mientras lea o consuma dígitos.
+          advance();
+        }
+      }else{
+        throw new UnexpectedSymbolException(peek(), line);
       }
     }
 
     // Transición a Estado 2: verifica si hay una notacion
-    if (peek() == 'E' || peek() == 'e') {
+    if (peek() == 'E') {
       advance(); // Consume
 
       // Estado 3: Verifico signo (+/-) en exponente de notación científica.
@@ -152,7 +152,7 @@ public class Lexer {
 
       // Estado 4: Verifico los dígitos del exponente
       if (!Character.isDigit(peek())) { // El exponente debe tener al menos un dígito.
-        throw new UnexpectedSymbolException("se esperaba un digito ", line);
+        throw new UnexpectedSymbolException(peek(), line);
       }
 
       // Leo dígitos en el exponente.
@@ -163,8 +163,11 @@ public class Lexer {
 
     // Finalizo el análisis del número y devuelvo un token.
     String text = source.substring(start, current); // Extraigo el número completo.
-    return new Token.NumberToken(TokenType.NUMBER, Double.parseDouble(text), line);
-
+    System.out.println(text);
+    if(text.contains(".") || text.contains("E")){
+      return new Token.ValueToken(TokenType.NUMBER, Double.parseDouble(text), line, text);
+    }
+    return new Token.ValueToken(TokenType.NUMBER, Integer.parseInt(text), line, text);
   }
 
   /**
@@ -176,33 +179,30 @@ public class Lexer {
    * @return Token
    */
   private Token string() {
-
     if (peek() != '"') {
-      throw new UnexpectedSymbolException("se esperaba un  '\"'", line);
+      throw new UnexpectedSymbolException(peek(), line);
     }
-
-    advance(); // Consumimos la comilla inicial
     int start = current; // Registro inicio de la cadena.
+    advance(); // Consumimos la comilla inicial
 
     // *Estado 24: Consumimos los caracteres dentro de la cadena
     while (peek() != '"' && !isAtEnd()) {
       if (peek() == '\n') {
-        throw new UnexpectedSymbolException(" Se encontro un salto de linea", line);
+        throw new UnexpectedSymbolException(peek(), line);
       }
       advance(); // Consumimos el carácter actual.
     }
 
     // Transición a Estado 25: Verificamos el cierre de la cadena.
     if (isAtEnd()) {
-      throw new UnexpectedSymbolException("no se cerro ", line);
+        throw new UnexpectedSymbolException(peek(), line);
     }
 
     advance(); // Consumimos la comilla final (`"`).
 
-    // Extraemos el contenido de la cadena (quitando las comillas inicial y final).
-    String value = source.substring(start, current - 1);
-    return new Token.StringToken(TokenType.STRING, value, line);
+    String value = source.substring(start, current);
 
+    return new Token.ValueToken(TokenType.STRING, source.substring(start+1, current-1), line, value);
   }
 
   private boolean isAtEnd() {
@@ -220,7 +220,6 @@ public class Lexer {
       return false;
     if (peek() != expected)
       return false;
-    current++;
     return true;
   }
 
@@ -229,7 +228,6 @@ public class Lexer {
       return false;
     if (peekNext() != expected)
       return false;
-    current++;
     return true;
   }
 
@@ -250,6 +248,9 @@ public class Lexer {
   }
 
   private char advance() {
+    if(isAtEnd()){
+      return '\0';
+    }
     return source.charAt(current++);
   }
 
@@ -267,7 +268,7 @@ public class Lexer {
    * @return Token
    */
   private void skipComment() {
-
+    advance(); // Consumimos el primer caracter del comentario.
     // Verificamos si es un comentario comenzando con "/".
     if (match('/')) { // Coincide con "//". .
       // Estado 30: Comentario de una línea
@@ -288,14 +289,8 @@ public class Lexer {
         }
         advance(); // Leemos cada carácter dentro del comentario.
       }
-
-      // Estado 29: Fin del comentario multilinea
-      if (isAtEnd()) {
-        throw new UnexpectedSymbolException("No se termino el multilinea", line);
-      }
     } else {
-      // No es un comentario, procesamos el '/' como un token <SLASH>.
-      addToken(TokenType.SLASH);
+        throw new IllegalStateException("Unexpected comment :(");
     }
   }
 
@@ -309,7 +304,7 @@ public class Lexer {
   private Token singleChar() {
     char c = advance();
     TokenType type = TokenType.fromChar(c);
-    return new Token.ValueToken(type, null, line, String.valueOf(c));
+    return new Token.KeywordToken(type, line);
   }
 
   /**
@@ -331,6 +326,7 @@ public class Lexer {
         case '!' -> TokenType.BANG_EQUAL;
         default -> throw new IllegalStateException("Unexpected relational operator :(");
       };
+      advance();
     } else {
       type = switch (c) {
         case '<' -> TokenType.LESS;
@@ -341,6 +337,7 @@ public class Lexer {
       };
     }
 
-    return new Token.ValueToken(type, null, line, String.valueOf(c));
+
+    return new Token.KeywordToken(type, line);
   }
 }
