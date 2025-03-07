@@ -125,6 +125,46 @@ public class Lexer {
    */
   private Token number() {
 
+    int start = current; // Registro inicio
+
+    // Estado 0, verififca si es la parte entera del numero
+    while (Character.isDigit(peek())) { // Mientras lea o consuma dígitos.
+      advance();
+    }
+
+    // Transición a Estado 1: verifico si hay punto decilam
+    if (peek() == '.' && Character.isDigit(peekNext())) { // Se confirma que es un decimal.
+      advance(); // Consumo el punto.
+
+      while (Character.isDigit(peek())) { // Leo los dígitos después del punto.
+        advance();
+      }
+    }
+
+    // Transición a Estado 2: verifica si hay una notacion
+    if (peek() == 'E' || peek() == 'e') {
+      advance(); // Consume
+
+      // Estado 3: Verifico signo (+/-) en exponente de notación científica.
+      if (peek() == '+' || peek() == '-') {
+        advance(); // Consumo el signo
+      }
+
+      // Estado 4: Verifico los dígitos del exponente
+      if (!Character.isDigit(peek())) { // El exponente debe tener al menos un dígito.
+        throw new UnexpectedSymbolException("se esperaba un digito ", line);
+      }
+
+      // Leo dígitos en el exponente.
+      while (Character.isDigit(peek())) {
+        advance();
+      }
+    }
+
+    // Finalizo el análisis del número y devuelvo un token.
+    String text = source.substring(start, current); // Extraigo el número completo.
+    return new Token.NumberToken(TokenType.NUMBER, Double.parseDouble(text), line);
+
   }
 
   /**
@@ -136,6 +176,32 @@ public class Lexer {
    * @return Token
    */
   private Token string() {
+
+    if (peek() != '"') {
+      throw new UnexpectedSymbolException("se esperaba un  '\"'", line);
+    }
+
+    advance(); // Consumimos la comilla inicial
+    int start = current; // Registro inicio de la cadena.
+
+    // *Estado 24: Consumimos los caracteres dentro de la cadena
+    while (peek() != '"' && !isAtEnd()) {
+      if (peek() == '\n') {
+        throw new UnexpectedSymbolException(" Se encontro un salto de linea", line);
+      }
+      advance(); // Consumimos el carácter actual.
+    }
+
+    // Transición a Estado 25: Verificamos el cierre de la cadena.
+    if (isAtEnd()) {
+      throw new UnexpectedSymbolException("no se cerro ", line);
+    }
+
+    advance(); // Consumimos la comilla final (`"`).
+
+    // Extraemos el contenido de la cadena (quitando las comillas inicial y final).
+    String value = source.substring(start, current - 1);
+    return new Token.StringToken(TokenType.STRING, value, line);
 
   }
 
@@ -202,6 +268,35 @@ public class Lexer {
    */
   private void skipComment() {
 
+    // Verificamos si es un comentario comenzando con "/".
+    if (match('/')) { // Coincide con "//". .
+      // Estado 30: Comentario de una línea
+      while (peek() != '\n' && !isAtEnd()) {
+        advance(); // Consumimos todos los caracteres de la línea.
+      }
+      // Estado 31: Comentario termina en el salto de línea
+      // Se ignoran los comentarios de una línea después de este punto.
+
+    } else if (match('*')) { // Coincide con "/*".
+      // Estado 27: Comentario multilínea
+      while (!isAtEnd()) {
+        if (peek() == '*' && peekNext() == '/') {
+          // Estado 28: Fin del comentario multilínea con "*/"
+          advance(); // Consumimos el '*'.
+          advance(); // Consumimos el '/'.
+          break;
+        }
+        advance(); // Leemos cada carácter dentro del comentario.
+      }
+
+      // Estado 29: Fin del comentario multilinea
+      if (isAtEnd()) {
+        throw new UnexpectedSymbolException("No se termino el multilinea", line);
+      }
+    } else {
+      // No es un comentario, procesamos el '/' como un token <SLASH>.
+      addToken(TokenType.SLASH);
+    }
   }
 
   /**
