@@ -2,6 +2,7 @@ package com.github.irmindev.controller;
 
 import com.github.irmindev.model.Token;
 import com.github.irmindev.model.TokenType;
+import com.github.irmindev.model.Token.ValueToken;
 import com.github.irmindev.model.exception.UnexpectedSymbolException;
 
 import java.util.List;
@@ -34,6 +35,8 @@ public class Lexer {
         tokens.add(number());
       } else if (match('"')) {
         tokens.add(string());
+      } else if (match('\'')) {
+        tokens.add(character());
       } else if (whiteSpaces.contains(peek())) {
         skipWhiteSpaces();
       } else if (match('/')) {
@@ -44,10 +47,10 @@ public class Lexer {
         } else {
           tokens.add(singleChar());
         }
-      } else if (singleCharTokens.contains(peek())) {
-        tokens.add(singleChar());
       } else if (match('<') || match('>') || match('=') || match('!')) {
         tokens.add(relationalOperator());
+      } else if (singleCharTokens.contains(peek())) {
+        tokens.add(singleChar());
       } else {
         throw new UnexpectedSymbolException(peek(), line);
       }
@@ -83,10 +86,39 @@ public class Lexer {
     }
   }
 
+  private ValueToken character() {
+    int start = current; // Registro inicio de la cadena.
+
+    if (peek() != '\'') {
+      throw new UnexpectedSymbolException(peek(), line);
+    }
+    advance();
+
+    if (peek() == '\n' || peek() == '\r' || peek() == '\t') {
+      throw new UnexpectedSymbolException(peek(), line);
+    }
+
+    advance();
+
+    if (peek() != '\'') {
+      throw new UnexpectedSymbolException(peek(), line);
+    }
+
+    advance(); // Consumimos la comilla final (`'`).
+
+    Character value = source.substring(start+1, current-1).charAt(0);
+
+    return new Token.ValueToken(TokenType.CHAR, value, line, source.substring(start, current));
+  }
+
   private TokenType identifierType(String text) {
     switch (text) {
       case "else":
         return TokenType.ELSE;
+      case "and":
+        return TokenType.AND;
+      case "or":
+        return TokenType.OR;
       case "false":
         return TokenType.FALSE;
       case "for":
@@ -107,6 +139,16 @@ public class Lexer {
         return TokenType.VAR;
       case "while":
         return TokenType.WHILE;
+      case "boolean":
+        return TokenType.BOOLEAN_KW;
+      case "int":
+        return TokenType.INTEGER_KW;
+      case "double":
+        return TokenType.DOUBLE_KW;
+      case "char":
+        return TokenType.CHAR_KW;
+      case "string":
+        return TokenType.STRING_KW;
       default:
         return TokenType.IDENTIFIER;
     }
@@ -163,11 +205,10 @@ public class Lexer {
 
     // Finalizo el análisis del número y devuelvo un token.
     String text = source.substring(start, current); // Extraigo el número completo.
-    System.out.println(text);
     if(text.contains(".") || text.contains("E")){
-      return new Token.ValueToken(TokenType.NUMBER, Double.parseDouble(text), line, text);
+      return new Token.ValueToken(TokenType.DOUBLE, Double.parseDouble(text), line, text);
     }
-    return new Token.ValueToken(TokenType.NUMBER, Integer.parseInt(text), line, text);
+    return new Token.ValueToken(TokenType.INTEGER, Integer.parseInt(text), line, text);
   }
 
   /**
@@ -275,18 +316,25 @@ public class Lexer {
       while (peek() != '\n' && !isAtEnd()) {
         advance(); // Consumimos todos los caracteres de la línea.
       }
+      
+
       // Estado 31: Comentario termina en el salto de línea
       // Se ignoran los comentarios de una línea después de este punto.
 
     } else if (match('*')) { // Coincide con "/*".
       // Estado 27: Comentario multilínea
       while (!isAtEnd()) {
+        if(peek() == '\n'){
+          line++;
+        }
+
         if (peek() == '*' && peekNext() == '/') {
           // Estado 28: Fin del comentario multilínea con "*/"
           advance(); // Consumimos el '*'.
           advance(); // Consumimos el '/'.
           break;
         }
+
         advance(); // Leemos cada carácter dentro del comentario.
       }
     } else {

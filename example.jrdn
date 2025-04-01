@@ -11,3 +11,5 @@ var msg = "Hola mundo";
 if(1 >= a){
     print "Si jala profe"
 }
+
+print.hola

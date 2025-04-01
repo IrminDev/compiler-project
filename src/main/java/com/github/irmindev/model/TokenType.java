@@ -26,7 +26,13 @@ public enum TokenType {
   IDENTIFIER, STRING, NUMBER,
 
   // End of file
-  EOF;
+  EOF,
+
+  // Data types
+  INTEGER, DOUBLE, CHAR,
+  
+  // Data kwywords
+  INTEGER_KW, DOUBLE_KW ,BOOLEAN_KW, STRING_KW, CHAR_KW;
 
   public static TokenType fromChar(char c) {
     return switch (c) {
@@ -47,4 +53,6 @@ public enum TokenType {
       default -> throw new IllegalArgumentException("Unexpected character: " + c);
     };
   }
+
+  //
 }
