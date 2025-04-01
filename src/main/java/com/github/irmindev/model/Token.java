@@ -29,6 +29,10 @@ public sealed abstract class Token permits
         return type;
     }
 
+    public int getLine() {
+        return -1;
+    }
+
     public static final class ValueToken extends Token {
         private final Object literal;
         private final int line;

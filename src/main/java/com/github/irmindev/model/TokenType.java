@@ -8,7 +8,7 @@ public enum TokenType {
   PLUS, MINUS, STAR, SLASH,
 
   // Operators (Relational)
-  LESS, GRATER, LESS_EQUAL, GRATER_EQUAL, EQUAL_EQUAL, BANG_EQUAL,
+  LESS, GREATER, LESS_EQUAL, GREATER_EQUAL, EQUAL_EQUAL, BANG_EQUAL,
 
   // Operators (Logical)
   AND, OR,
@@ -23,7 +23,7 @@ public enum TokenType {
   LEFT_PAREN, RIGHT_PAREN, LEFT_BRACE, RIGHT_BRACE, COMMA, SEMICOLON,
 
   // Data types
-  IDENTIFIER, STRING, NUMBER,
+  IDENTIFIER, STRING,
 
   // End of file
   EOF,
@@ -41,7 +41,7 @@ public enum TokenType {
       case '*' -> STAR;
       case '/' -> SLASH;
       case '<' -> LESS;
-      case '>' -> GRATER;
+      case '>' -> GREATER;
       case '=' -> EQUAL;
       case '!' -> BANG;
       case '(' -> LEFT_PAREN;

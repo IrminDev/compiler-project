@@ -369,7 +369,7 @@ public class Lexer {
     if (match('=')) {
       type = switch (c) {
         case '<' -> TokenType.LESS_EQUAL;
-        case '>' -> TokenType.GRATER_EQUAL;
+        case '>' -> TokenType.GREATER_EQUAL;
         case '=' -> TokenType.EQUAL_EQUAL;
         case '!' -> TokenType.BANG_EQUAL;
         default -> throw new IllegalStateException("Unexpected relational operator :(");
@@ -378,7 +378,7 @@ public class Lexer {
     } else {
       type = switch (c) {
         case '<' -> TokenType.LESS;
-        case '>' -> TokenType.GRATER;
+        case '>' -> TokenType.GREATER;
         case '=' -> TokenType.EQUAL;
         case '!' -> TokenType.BANG;
         default -> throw new IllegalStateException("Unexpected relational operator :(");
