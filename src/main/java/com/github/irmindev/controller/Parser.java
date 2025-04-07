@@ -32,6 +32,107 @@ public class Parser {
       * Sentences section
       * @author Angel
     */
+    public void statement() {
+        TokenType type = tokens.get(currentTokenIndex).getType();
+        switch (type) {
+            case PRINT:
+                printStatement();
+                break;
+            case IF:
+                ifStatement();
+                break;
+            case FOR:
+                forStatement();
+                break;
+            case WHILE:
+                whileStatement();
+                break;
+            case RETURN:
+                returnStatement();
+                break;
+            case LEFT_BRACE:
+                block();
+                break;
+            default:
+                expressionStatement();
+                break;
+        }
+    }
+
+    public void expressionStatement() {
+        expression();
+        match(TokenType.SEMICOLON);
+    }
+
+    
+    public void printStatement() {
+        match(TokenType.PRINT);
+        expression();
+        match(TokenType.SEMICOLON);
+    }
+
+    
+    public void ifStatement() {
+        match(TokenType.IF);
+        match(TokenType.LEFT_PAREN);
+        expression(); 
+        match(TokenType.RIGHT_PAREN);
+        statement(); 
+        if (tokens.get(currentTokenIndex).getType() == TokenType.ELSE) {
+            match(TokenType.ELSE);
+            statement(); 
+        }
+    }
+
+    // Matching the "for" statement
+    public void forStatement() {
+        match(TokenType.FOR);
+        match(TokenType.LEFT_PAREN);
+
+        if (tokens.get(currentTokenIndex).getType() == TokenType.VAR) {
+            varDeclaration(); 
+        } else if (tokens.get(currentTokenIndex).getType() != TokenType.SEMICOLON) {
+            expressionStatement(); 
+        } else {
+            match(TokenType.SEMICOLON); 
+        }
+
+        if (tokens.get(currentTokenIndex).getType() != TokenType.SEMICOLON) {
+            expression(); 
+        }
+        match(TokenType.SEMICOLON);
+
+        if (tokens.get(currentTokenIndex).getType() != TokenType.RIGHT_PAREN) {
+            expression(); 
+        }
+        match(TokenType.RIGHT_PAREN);
+
+        statement(); 
+    }
+
+    public void whileStatement() {
+        match(TokenType.WHILE);
+        match(TokenType.LEFT_PAREN);
+        expression(); 
+        match(TokenType.RIGHT_PAREN);
+        statement(); 
+    }
+
+    public void returnStatement() {
+        match(TokenType.RETURN);
+        if (tokens.get(currentTokenIndex).getType() != TokenType.SEMICOLON) {
+            expression(); 
+        }
+        match(TokenType.SEMICOLON);
+    }
+
+    public void block() {
+        match(TokenType.LEFT_BRACE);
+        while (tokens.get(currentTokenIndex).getType() != TokenType.RIGHT_BRACE) {
+            statement(); 
+        }
+        match(TokenType.RIGHT_BRACE); 
+    }
 
     /**
      * Expressions section
