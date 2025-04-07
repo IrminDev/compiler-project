@@ -32,6 +32,7 @@ public class Parser {
       * Sentences section
       * @author Angel
     */
+    
     public void statement() {
         TokenType type = tokens.get(currentTokenIndex).getType();
         switch (type) {
@@ -84,7 +85,6 @@ public class Parser {
         }
     }
 
-    // Matching the "for" statement
     public void forStatement() {
         match(TokenType.FOR);
         match(TokenType.LEFT_PAREN);
