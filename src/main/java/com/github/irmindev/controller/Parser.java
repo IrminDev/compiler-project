@@ -1,6 +1,7 @@
 package com.github.irmindev.controller;
 
 import java.util.List;
+import java.util.Set;
 
 import com.github.irmindev.model.Token;
 import com.github.irmindev.model.TokenType;
@@ -9,6 +10,29 @@ import com.github.irmindev.model.exception.UnexpectedTokenException;
 public class Parser {
   private final List<Token> tokens;
   private int currentTokenIndex = 0;
+
+  private Set<TokenType> expressionTokens = Set.of(
+    TokenType.BANG,
+    TokenType.MINUS,
+    TokenType.TRUE,
+    TokenType.FALSE,
+    TokenType.NULL,
+    TokenType.INTEGER,
+    TokenType.DOUBLE,
+    TokenType.STRING,
+    TokenType.IDENTIFIER,
+    TokenType.CHAR,
+    TokenType.LEFT_PAREN
+  );
+
+  private Set<TokenType> statementTokens = Set.of(
+    TokenType.FOR,
+    TokenType.WHILE,
+    TokenType.PRINT,
+    TokenType.IF,
+    TokenType.RETURN,
+    TokenType.LEFT_BRACE
+  );
 
   public Parser(List<Token> tokens) {
     this.tokens = tokens;
@@ -20,6 +44,7 @@ public class Parser {
    */
   public void parse() {
     program();
+    match(TokenType.EOF);
   }
 
   /**
@@ -32,83 +57,114 @@ public class Parser {
   }
 
   private void declaration() {
-    while (currentTokenIndex < tokens.size()
-        && tokens.get(currentTokenIndex).getType() != TokenType.EOF) {
-      
-      if (tokens.get(currentTokenIndex).getType() == TokenType.FUN) {
+    switch (tokens.get(currentTokenIndex).getType()) {
+      case TokenType.FUN:
         functionDeclaration();
-      }
-      else if (tokens.get(currentTokenIndex).getType() == TokenType.INTEGER_KW) {
+        declaration();
+        break;
+      case TokenType.INTEGER_KW:
         intDeclaration();
-      }
-      else if (tokens.get(currentTokenIndex).getType() == TokenType.DOUBLE_KW) {
+        declaration();
+        break;
+      case TokenType.DOUBLE_KW:
         doubleDeclaration();
-      }
-      else if (tokens.get(currentTokenIndex).getType() == TokenType.STRING_KW) {
+        declaration();
+        break;
+      case TokenType.STRING_KW:
         stringDeclaration();
-      }
-      else if (tokens.get(currentTokenIndex).getType() == TokenType.CHAR_KW) {
+        declaration();
+        break;
+      case TokenType.CHAR_KW:
         charDeclaration();
-      }
-      else if (tokens.get(currentTokenIndex).getType() == TokenType.BOOLEAN_KW) {
+        declaration();
+        break;
+      case TokenType.BOOLEAN_KW:
         booleanDeclaration();
-      }
-      else if (tokens.get(currentTokenIndex).getType() == TokenType.VAR) {
+        declaration();
+        break;
+      case TokenType.VAR:
         varDeclaration();
-      }
-      else {
-        statement();
-      }
+        declaration();
+        break;
+      default:
+        if (statementTokens.contains(tokens.get(currentTokenIndex).getType())
+          || expressionTokens.contains(tokens.get(currentTokenIndex).getType())) {
+          statement();
+          declaration();
+        }
+        break;
     }
+
   }
-  
-  private void intDeclaration() {
-    match(TokenType.INTEGER_KW);
-    match(TokenType.IDENTIFIER);
+
+  private void intInit(){
     if (tokens.get(currentTokenIndex).getType() == TokenType.EQUAL) {
       match(TokenType.EQUAL);
       expression();
     }
+  }
+
+  private void doubleInit(){
+    if (tokens.get(currentTokenIndex).getType() == TokenType.EQUAL) {
+      match(TokenType.EQUAL);
+      expression();
+    }
+  }
+
+  private void stringInit(){
+    if (tokens.get(currentTokenIndex).getType() == TokenType.EQUAL) {
+      match(TokenType.EQUAL);
+      expression();
+    }
+  }
+
+  private void charInit(){
+    if (tokens.get(currentTokenIndex).getType() == TokenType.EQUAL) {
+      match(TokenType.EQUAL);
+      expression();
+    }
+  }
+
+  private void booleanInit(){
+    if (tokens.get(currentTokenIndex).getType() == TokenType.EQUAL) {
+      match(TokenType.EQUAL);
+      expression();
+    }
+  }
+  
+  
+  private void intDeclaration() {
+    match(TokenType.INTEGER_KW);
+    match(TokenType.IDENTIFIER);
+    intInit();
     match(TokenType.SEMICOLON);
   }
   
   private void doubleDeclaration() {
     match(TokenType.DOUBLE_KW);
     match(TokenType.IDENTIFIER);
-    if (tokens.get(currentTokenIndex).getType() == TokenType.EQUAL) {
-      match(TokenType.EQUAL);
-      expression();
-    }
+    doubleInit();
     match(TokenType.SEMICOLON);
   }
   
   private void stringDeclaration() {
     match(TokenType.STRING_KW);
     match(TokenType.IDENTIFIER);
-    if (tokens.get(currentTokenIndex).getType() == TokenType.EQUAL) {
-      match(TokenType.EQUAL);
-      expression();
-    }
+    stringInit();
     match(TokenType.SEMICOLON);
   }
   
   private void charDeclaration() {
     match(TokenType.CHAR_KW);
     match(TokenType.IDENTIFIER);
-    if (tokens.get(currentTokenIndex).getType() == TokenType.EQUAL) {
-      match(TokenType.EQUAL);
-      expression();
-    }
+    charInit();
     match(TokenType.SEMICOLON);
   }
   
   private void booleanDeclaration() {
     match(TokenType.BOOLEAN_KW);
     match(TokenType.IDENTIFIER);
-    if (tokens.get(currentTokenIndex).getType() == TokenType.EQUAL) {
-      match(TokenType.EQUAL);
-      expression();
-    }
+    booleanInit();
     match(TokenType.SEMICOLON);
   }
 
@@ -122,14 +178,14 @@ public class Parser {
   }
 
   private void parameters() {
-    if (tokens.get(currentTokenIndex).getType() != TokenType.RIGHT_PAREN) {
+    if(tokens.get(currentTokenIndex).getType() == TokenType.IDENTIFIER) {
       match(TokenType.IDENTIFIER);
       parametersOpt();
     }
   }
 
   private void parametersOpt() {
-    while (tokens.get(currentTokenIndex).getType() == TokenType.COMMA) {
+    if(tokens.get(currentTokenIndex).getType() == TokenType.COMMA) {
       match(TokenType.COMMA);
       match(TokenType.IDENTIFIER);
       parametersOpt();
@@ -158,7 +214,7 @@ public class Parser {
   }
 
   private void argumentsOpt() {
-    while (tokens.get(currentTokenIndex).getType() == TokenType.COMMA) {
+    if (tokens.get(currentTokenIndex).getType() == TokenType.COMMA) {
       match(TokenType.COMMA);
       expression();
       argumentsOpt();
@@ -193,7 +249,11 @@ public class Parser {
         block();
         break;
       default:
-        expressionStatement();
+        if(expressionTokens.contains(type)) {
+          expressionStatement();
+        } else {
+          throw new UnexpectedTokenException("Statement token", type, tokens.get(currentTokenIndex).getLine());
+        }
         break;
     }
   }
@@ -215,6 +275,10 @@ public class Parser {
     expression();
     match(TokenType.RIGHT_PAREN);
     statement();
+    elseStatement();
+  }
+
+  private void elseStatement() {
     if (tokens.get(currentTokenIndex).getType() == TokenType.ELSE) {
       match(TokenType.ELSE);
       statement();
@@ -225,35 +289,67 @@ public class Parser {
     match(TokenType.FOR);
     match(TokenType.LEFT_PAREN);
 
-    if (tokens.get(currentTokenIndex).getType() == TokenType.VAR) {
-      varDeclaration();
-    } else if (tokens.get(currentTokenIndex).getType() == TokenType.INTEGER_KW) {
-      intDeclaration();
-    } else if (tokens.get(currentTokenIndex).getType() == TokenType.DOUBLE_KW) {
-      doubleDeclaration();
-    } else if (tokens.get(currentTokenIndex).getType() == TokenType.STRING_KW) {
-      stringDeclaration();
-    } else if (tokens.get(currentTokenIndex).getType() == TokenType.CHAR_KW) {
-      charDeclaration();
-    } else if (tokens.get(currentTokenIndex).getType() == TokenType.BOOLEAN_KW) {
-      booleanDeclaration();
-    } else if (tokens.get(currentTokenIndex).getType() != TokenType.SEMICOLON) {
-      match(TokenType.SEMICOLON);
-    } else {
-      expressionStatement();
-    }
+    forStatementInit();
 
-    if (tokens.get(currentTokenIndex).getType() != TokenType.SEMICOLON) {
-      expression();
-    }
-    match(TokenType.SEMICOLON);
+    forStatementCond();
 
-    if (tokens.get(currentTokenIndex).getType() != TokenType.RIGHT_PAREN) {
-      expression();
-    }
+    forStatementInc();
+
     match(TokenType.RIGHT_PAREN);
 
     statement();
+  }
+
+  private void forStatementInit(){
+    switch (tokens.get(currentTokenIndex).getType()) {
+      case TokenType.VAR:
+        varDeclaration();
+        break;
+      case TokenType.INTEGER_KW:
+        intDeclaration();
+        break;
+      case TokenType.DOUBLE_KW:
+        doubleDeclaration();
+        break;
+      case TokenType.STRING_KW:
+        stringDeclaration();
+        break;
+      case TokenType.CHAR_KW:
+        charDeclaration();
+        break;
+      case TokenType.BOOLEAN_KW:
+        booleanDeclaration();
+        break;
+      case TokenType.SEMICOLON:
+        match(TokenType.SEMICOLON);
+        break;
+      default:
+        if(expressionTokens.contains(tokens.get(currentTokenIndex).getType())) {
+          expressionStatement();
+        } else {
+          throw new UnexpectedTokenException("Statement token", tokens.get(currentTokenIndex).getType(), tokens.get(currentTokenIndex).getLine());
+        }
+        break;
+    }
+  }
+
+  private void forStatementCond(){
+    if (tokens.get(currentTokenIndex).getType() == TokenType.SEMICOLON) {
+      match(TokenType.SEMICOLON);
+    } else if (expressionTokens.contains(tokens.get(currentTokenIndex).getType())) {
+      expression();
+      match(TokenType.SEMICOLON);
+    } else {
+      throw new UnexpectedTokenException("Statement token", tokens.get(currentTokenIndex).getType(), tokens.get(currentTokenIndex).getLine());
+    }
+  }
+
+  private void forStatementInc(){
+    if(expressionTokens.contains(tokens.get(currentTokenIndex).getType())) {
+      expression();
+    } else {
+      throw new UnexpectedTokenException("Statement token", tokens.get(currentTokenIndex).getType(), tokens.get(currentTokenIndex).getLine());
+    }
   }
 
   private void whileStatement() {
@@ -266,44 +362,20 @@ public class Parser {
 
   private void returnStatement() {
     match(TokenType.RETURN);
-    if (tokens.get(currentTokenIndex).getType() != TokenType.SEMICOLON) {
+    returnExpOpt();
+    match(TokenType.SEMICOLON);
+  }
+
+  private void returnExpOpt() {
+    if(expressionTokens.contains(tokens.get(currentTokenIndex).getType())) {
       expression();
     }
-    match(TokenType.SEMICOLON);
   }
 
   private void block() {
     match(TokenType.LEFT_BRACE);
     
-    while (currentTokenIndex < tokens.size() && 
-           tokens.get(currentTokenIndex).getType() != TokenType.RIGHT_BRACE && 
-           tokens.get(currentTokenIndex).getType() != TokenType.EOF) {
-      
-      if (tokens.get(currentTokenIndex).getType() == TokenType.FUN) {
-        functionDeclaration();
-      } 
-      else if (tokens.get(currentTokenIndex).getType() == TokenType.INTEGER_KW) {
-        intDeclaration();
-      }
-      else if (tokens.get(currentTokenIndex).getType() == TokenType.DOUBLE_KW) {
-        doubleDeclaration();
-      }
-      else if (tokens.get(currentTokenIndex).getType() == TokenType.STRING_KW) {
-        stringDeclaration();
-      }
-      else if (tokens.get(currentTokenIndex).getType() == TokenType.CHAR_KW) {
-        charDeclaration();
-      }
-      else if (tokens.get(currentTokenIndex).getType() == TokenType.BOOLEAN_KW) {
-        booleanDeclaration();
-      }
-      else if (tokens.get(currentTokenIndex).getType() == TokenType.VAR) {
-        varDeclaration();
-      } 
-      else {
-        statement();
-      }
-    }
+    declaration();
     
     match(TokenType.RIGHT_BRACE);
   }

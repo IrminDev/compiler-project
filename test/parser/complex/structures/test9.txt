@@ -1,0 +1,1 @@
+char multiChar = 'abc';  // Los caracteres solo pueden tener un símbolo

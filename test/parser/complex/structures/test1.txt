@@ -1,0 +1,1 @@
+var x = ((((5 + 3) * 2) - 1) / (4 - 2)) > (7 / 3) and !(false or true) and null == null;

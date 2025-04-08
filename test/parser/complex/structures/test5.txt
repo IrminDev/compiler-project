@@ -1,0 +1,3 @@
+for (;;) {
+  print "Esto es un loop infinito";
+}
