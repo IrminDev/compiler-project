@@ -1,0 +1,6 @@
+
+fun hola() {
+    print "Hola";
+}
+
+print "Esto está afuera";

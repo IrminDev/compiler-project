@@ -19,7 +19,7 @@ public class Parser {
    * This method is the top-level entry point for parsing the tokens.
    */
   public void parse() {
-
+    program();
   }
 
   /**
@@ -27,23 +27,92 @@ public class Parser {
    * 
    * @author Rodolfo
    */
-  public void program() {
+  private void program() {
     declaration();
   }
 
-  public void declaration() {
-    while (currentTokenIndex < tokens.size()) {
+  private void declaration() {
+    while (currentTokenIndex < tokens.size()
+        && tokens.get(currentTokenIndex).getType() != TokenType.EOF) {
+      
       if (tokens.get(currentTokenIndex).getType() == TokenType.FUN) {
         functionDeclaration();
-      } else if (tokens.get(currentTokenIndex).getType() == TokenType.VAR) {
+      }
+      else if (tokens.get(currentTokenIndex).getType() == TokenType.INTEGER_KW) {
+        intDeclaration();
+      }
+      else if (tokens.get(currentTokenIndex).getType() == TokenType.DOUBLE_KW) {
+        doubleDeclaration();
+      }
+      else if (tokens.get(currentTokenIndex).getType() == TokenType.STRING_KW) {
+        stringDeclaration();
+      }
+      else if (tokens.get(currentTokenIndex).getType() == TokenType.CHAR_KW) {
+        charDeclaration();
+      }
+      else if (tokens.get(currentTokenIndex).getType() == TokenType.BOOLEAN_KW) {
+        booleanDeclaration();
+      }
+      else if (tokens.get(currentTokenIndex).getType() == TokenType.VAR) {
         varDeclaration();
-      } else {
+      }
+      else {
         statement();
       }
     }
   }
+  
+  private void intDeclaration() {
+    match(TokenType.INTEGER_KW);
+    match(TokenType.IDENTIFIER);
+    if (tokens.get(currentTokenIndex).getType() == TokenType.EQUAL) {
+      match(TokenType.EQUAL);
+      expression();
+    }
+    match(TokenType.SEMICOLON);
+  }
+  
+  private void doubleDeclaration() {
+    match(TokenType.DOUBLE_KW);
+    match(TokenType.IDENTIFIER);
+    if (tokens.get(currentTokenIndex).getType() == TokenType.EQUAL) {
+      match(TokenType.EQUAL);
+      expression();
+    }
+    match(TokenType.SEMICOLON);
+  }
+  
+  private void stringDeclaration() {
+    match(TokenType.STRING_KW);
+    match(TokenType.IDENTIFIER);
+    if (tokens.get(currentTokenIndex).getType() == TokenType.EQUAL) {
+      match(TokenType.EQUAL);
+      expression();
+    }
+    match(TokenType.SEMICOLON);
+  }
+  
+  private void charDeclaration() {
+    match(TokenType.CHAR_KW);
+    match(TokenType.IDENTIFIER);
+    if (tokens.get(currentTokenIndex).getType() == TokenType.EQUAL) {
+      match(TokenType.EQUAL);
+      expression();
+    }
+    match(TokenType.SEMICOLON);
+  }
+  
+  private void booleanDeclaration() {
+    match(TokenType.BOOLEAN_KW);
+    match(TokenType.IDENTIFIER);
+    if (tokens.get(currentTokenIndex).getType() == TokenType.EQUAL) {
+      match(TokenType.EQUAL);
+      expression();
+    }
+    match(TokenType.SEMICOLON);
+  }
 
-  public void functionDeclaration() {
+  private void functionDeclaration() {
     match(TokenType.FUN);
     match(TokenType.IDENTIFIER);
     match(TokenType.LEFT_PAREN);
@@ -52,14 +121,14 @@ public class Parser {
     block();
   }
 
-  public void parameters() {
+  private void parameters() {
     if (tokens.get(currentTokenIndex).getType() != TokenType.RIGHT_PAREN) {
       match(TokenType.IDENTIFIER);
       parametersOpt();
     }
   }
 
-  public void parametersOpt() {
+  private void parametersOpt() {
     while (tokens.get(currentTokenIndex).getType() == TokenType.COMMA) {
       match(TokenType.COMMA);
       match(TokenType.IDENTIFIER);
@@ -67,28 +136,28 @@ public class Parser {
     }
   }
 
-  public void varDeclaration() {
+  private void varDeclaration() {
     match(TokenType.VAR);
     match(TokenType.IDENTIFIER);
     varInit();
     match(TokenType.SEMICOLON);
   }
 
-  public void varInit() {
+  private void varInit() {
     if (tokens.get(currentTokenIndex).getType() == TokenType.EQUAL) {
       match(TokenType.EQUAL);
       expression();
     }
   }
 
-  public void arguments() {
+  private void arguments() {
     if (tokens.get(currentTokenIndex).getType() != TokenType.RIGHT_PAREN) {
       expression();
       argumentsOpt();
     }
   }
 
-  public void argumentsOpt() {
+  private void argumentsOpt() {
     while (tokens.get(currentTokenIndex).getType() == TokenType.COMMA) {
       match(TokenType.COMMA);
       expression();
@@ -102,25 +171,25 @@ public class Parser {
    * @author Angel
    */
 
-  public void statement() {
+   private void statement() {
     TokenType type = tokens.get(currentTokenIndex).getType();
     switch (type) {
-      case PRINT:
+      case TokenType.PRINT:
         printStatement();
         break;
-      case IF:
+      case TokenType.IF:
         ifStatement();
         break;
-      case FOR:
+      case TokenType.FOR:
         forStatement();
         break;
-      case WHILE:
+      case TokenType.WHILE:
         whileStatement();
         break;
-      case RETURN:
+      case TokenType.RETURN:
         returnStatement();
         break;
-      case LEFT_BRACE:
+      case TokenType.LEFT_BRACE:
         block();
         break;
       default:
@@ -129,18 +198,18 @@ public class Parser {
     }
   }
 
-  public void expressionStatement() {
+  private void expressionStatement() {
     expression();
     match(TokenType.SEMICOLON);
   }
 
-  public void printStatement() {
+  private void printStatement() {
     match(TokenType.PRINT);
     expression();
     match(TokenType.SEMICOLON);
   }
 
-  public void ifStatement() {
+  private void ifStatement() {
     match(TokenType.IF);
     match(TokenType.LEFT_PAREN);
     expression();
@@ -152,16 +221,26 @@ public class Parser {
     }
   }
 
-  public void forStatement() {
+  private void forStatement() {
     match(TokenType.FOR);
     match(TokenType.LEFT_PAREN);
 
     if (tokens.get(currentTokenIndex).getType() == TokenType.VAR) {
       varDeclaration();
+    } else if (tokens.get(currentTokenIndex).getType() == TokenType.INTEGER_KW) {
+      intDeclaration();
+    } else if (tokens.get(currentTokenIndex).getType() == TokenType.DOUBLE_KW) {
+      doubleDeclaration();
+    } else if (tokens.get(currentTokenIndex).getType() == TokenType.STRING_KW) {
+      stringDeclaration();
+    } else if (tokens.get(currentTokenIndex).getType() == TokenType.CHAR_KW) {
+      charDeclaration();
+    } else if (tokens.get(currentTokenIndex).getType() == TokenType.BOOLEAN_KW) {
+      booleanDeclaration();
     } else if (tokens.get(currentTokenIndex).getType() != TokenType.SEMICOLON) {
-      expressionStatement();
-    } else {
       match(TokenType.SEMICOLON);
+    } else {
+      expressionStatement();
     }
 
     if (tokens.get(currentTokenIndex).getType() != TokenType.SEMICOLON) {
@@ -177,7 +256,7 @@ public class Parser {
     statement();
   }
 
-  public void whileStatement() {
+  private void whileStatement() {
     match(TokenType.WHILE);
     match(TokenType.LEFT_PAREN);
     expression();
@@ -185,7 +264,7 @@ public class Parser {
     statement();
   }
 
-  public void returnStatement() {
+  private void returnStatement() {
     match(TokenType.RETURN);
     if (tokens.get(currentTokenIndex).getType() != TokenType.SEMICOLON) {
       expression();
@@ -193,11 +272,39 @@ public class Parser {
     match(TokenType.SEMICOLON);
   }
 
-  public void block() {
+  private void block() {
     match(TokenType.LEFT_BRACE);
-    while (tokens.get(currentTokenIndex).getType() != TokenType.RIGHT_BRACE) {
-      statement();
+    
+    while (currentTokenIndex < tokens.size() && 
+           tokens.get(currentTokenIndex).getType() != TokenType.RIGHT_BRACE && 
+           tokens.get(currentTokenIndex).getType() != TokenType.EOF) {
+      
+      if (tokens.get(currentTokenIndex).getType() == TokenType.FUN) {
+        functionDeclaration();
+      } 
+      else if (tokens.get(currentTokenIndex).getType() == TokenType.INTEGER_KW) {
+        intDeclaration();
+      }
+      else if (tokens.get(currentTokenIndex).getType() == TokenType.DOUBLE_KW) {
+        doubleDeclaration();
+      }
+      else if (tokens.get(currentTokenIndex).getType() == TokenType.STRING_KW) {
+        stringDeclaration();
+      }
+      else if (tokens.get(currentTokenIndex).getType() == TokenType.CHAR_KW) {
+        charDeclaration();
+      }
+      else if (tokens.get(currentTokenIndex).getType() == TokenType.BOOLEAN_KW) {
+        booleanDeclaration();
+      }
+      else if (tokens.get(currentTokenIndex).getType() == TokenType.VAR) {
+        varDeclaration();
+      } 
+      else {
+        statement();
+      }
     }
+    
     match(TokenType.RIGHT_BRACE);
   }
 
@@ -207,52 +314,52 @@ public class Parser {
    * @author Irmin
    */
 
-  public void expression() {
+  private void expression() {
     assignment();
   }
 
-  public void assignment() {
+  private void assignment() {
     logicOr();
     assignmentOpc();
   }
 
-  public void assignmentOpc() {
+  private void assignmentOpc() {
     if (TokenType.EQUAL.equals(tokens.get(currentTokenIndex).getType())) {
       match(TokenType.EQUAL);
       assignment();
     }
   }
 
-  public void logicOr() {
+  private void logicOr() {
     logicAnd();
     logicOrOpt();
   }
 
-  public void logicOrOpt() {
+  private void logicOrOpt() {
     if (TokenType.OR.equals(tokens.get(currentTokenIndex).getType())) {
       match(TokenType.OR);
       logicOr();
     }
   }
 
-  public void logicAnd() {
+  private void logicAnd() {
     equality();
     logicAndOpt();
   }
 
-  public void logicAndOpt() {
+  private void logicAndOpt() {
     if (TokenType.AND.equals(tokens.get(currentTokenIndex).getType())) {
       match(TokenType.AND);
       logicAnd();
     }
   }
 
-  public void equality() {
+  private void equality() {
     comparison();
     equalityOpt();
   }
 
-  public void equalityOpt() {
+  private void equalityOpt() {
     switch (tokens.get(currentTokenIndex).getType()) {
       case TokenType.EQUAL_EQUAL:
         match(TokenType.EQUAL_EQUAL);
@@ -267,12 +374,12 @@ public class Parser {
     }
   }
 
-  public void comparison() {
+  private void comparison() {
     term();
     comparisonOpt();
   }
 
-  public void comparisonOpt() {
+  private void comparisonOpt() {
     switch (tokens.get(currentTokenIndex).getType()) {
       case TokenType.GREATER:
         match(TokenType.GREATER);
@@ -295,12 +402,12 @@ public class Parser {
     }
   }
 
-  public void term() {
+  private void term() {
     factor();
     termOpt();
   }
 
-  public void termOpt() {
+  private void termOpt() {
     switch (tokens.get(currentTokenIndex).getType()) {
       case TokenType.PLUS:
         match(TokenType.PLUS);
@@ -315,12 +422,12 @@ public class Parser {
     }
   }
 
-  public void factor() {
+  private void factor() {
     unary();
     factorOpt();
   }
 
-  public void factorOpt() {
+  private void factorOpt() {
     switch (tokens.get(currentTokenIndex).getType()) {
       case TokenType.STAR:
         match(TokenType.STAR);
@@ -335,7 +442,7 @@ public class Parser {
     }
   }
 
-  public void unary() {
+  private void unary() {
     switch (tokens.get(currentTokenIndex).getType()) {
       case TokenType.BANG:
         match(TokenType.BANG);
@@ -346,16 +453,17 @@ public class Parser {
         unary();
         break;
       default:
+        call();
         break;
     }
   }
 
-  public void call() {
+  private void call() {
     primary();
     callOpt();
   }
 
-  public void callOpt() {
+  private void callOpt() {
     if (TokenType.LEFT_PAREN.equals(tokens.get(currentTokenIndex).getType())) {
       match(TokenType.LEFT_PAREN);
       arguments();
@@ -363,7 +471,7 @@ public class Parser {
     }
   }
 
-  public void primary() {
+  private void primary() {
     switch (tokens.get(currentTokenIndex).getType()) {
       case TokenType.INTEGER:
         match(TokenType.INTEGER);
@@ -389,8 +497,13 @@ public class Parser {
       case TokenType.CHAR:
         match(TokenType.CHAR);
         break;
-      default:
+      case TokenType.LEFT_PAREN:
+        match(TokenType.LEFT_PAREN);
+        expression();
+        match(TokenType.RIGHT_PAREN);
         break;
+      default:
+        throw new UnexpectedTokenException("Value token", tokens.get(currentTokenIndex).getType(), tokens.get(currentTokenIndex).getLine());
     }
   }
 
@@ -400,7 +513,7 @@ public class Parser {
    * @author Irmin
    */
 
-  public void match(TokenType expectedType) {
+  private void match(TokenType expectedType) {
     if (currentTokenIndex < tokens.size()) {
       Token currentToken = tokens.get(currentTokenIndex);
       if (currentToken.getType().equals(expectedType)) {

@@ -1,0 +1,8 @@
+var a = 5;
+var b = 10;
+var c = 2;
+var result = a + b * c;  // Should prioritize multiplication
+print result;  // Should print 25
+
+var logicalTest = true and false or true;  // Should evaluate to true
+print logicalTest;

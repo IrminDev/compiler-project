@@ -1,0 +1,14 @@
+var a = 5;
+var b = 10;
+
+if (a < b and a > 0) {
+  print "a is between 0 and b";
+}
+
+if (a > b or b > 0) {
+  print "Either a is greater than b or b is positive";
+}
+
+if (!(a > b)) {
+  print "a is not greater than b";
+}

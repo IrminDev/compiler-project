@@ -2,7 +2,7 @@ package com.github.irmindev;
 import java.io.*;
 
 import com.github.irmindev.controller.Lexer;
-import com.github.irmindev.model.Token;
+import com.github.irmindev.controller.Parser;
 
 public class REPL {
     public static void main(String[] args) {
@@ -33,7 +33,9 @@ public class REPL {
 
     private static void execute(String s) {
         Lexer lexer = new Lexer(s);
-        lexer.scanTokens().forEach(Token::printToken);
+        Parser parser = new Parser(lexer.scanTokens());
+        parser.parse();
+        System.out.println("Parsed successfully!");
     }
 
     public static String readFile(String path) throws FileNotFoundException {

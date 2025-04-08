@@ -1,0 +1,84 @@
+// Test file for data types in the language
+
+// Integer declarations and operations
+int a = 10;
+int b = -5;
+int c = a + b * 2;  // Should be 0 with proper precedence
+int d = (a + b) * 2; // Should be 10 with parentheses
+print c;
+print d;
+
+// Double declarations and operations
+double x = 3.14;
+double y = 2.5;
+double z = x * y;  // Should be 7.85
+double w = 1.5E2;  // Scientific notation: 150.0
+print z;
+print w;
+
+// String declarations and operations
+string greeting = "Hello";
+string name = "World";
+string message = greeting + ", " + name + "!";
+print greeting;
+print message;
+
+// Character declarations
+char firstLetter = 'H';
+char lastLetter = '!';
+print firstLetter;
+print lastLetter;
+
+// Boolean declarations and logical operations
+boolean isTrue = true;
+boolean isFalse = false;
+boolean result = isTrue and isFalse;
+print isTrue;
+print isFalse;
+print result;
+
+// Variable declarations without type (using var)
+var dynamicInt = 42;
+var dynamicDouble = 3.14159;
+var dynamicString = "Dynamic string";
+var dynamicBool = true;
+print dynamicInt;
+print dynamicDouble;
+print dynamicString;
+print dynamicBool;
+
+// Mixed type expressions (where allowed)
+var sum = a + x;  // int + double
+print sum;
+
+// Type in function parameters
+fun calculateAverage( x,  y) {
+  return (x + y) / 2;
+}
+
+// Type in function return (implicit from the expression)
+fun greet( personName) {
+  return "Hello, " + personName + "!";
+}
+
+// Nested blocks with different typed variables
+{
+  int blockVar = 100;
+  {
+    double nestedVar = 99.9;
+    print blockVar;
+    print nestedVar;
+  }
+  print blockVar;
+}
+
+// Type in control structures
+if (isTrue and isFalse) {
+  string conditionalVar = "Condition is true";
+  print conditionalVar;
+}
+
+// Testing all primitive types in a for loop
+for (int i = 0; i < 5; i = i + 1) {
+  print i;
+}
