@@ -62,26 +62,6 @@ public class Parser {
         functionDeclaration();
         declaration();
         break;
-      case TokenType.INTEGER_KW:
-        intDeclaration();
-        declaration();
-        break;
-      case TokenType.DOUBLE_KW:
-        doubleDeclaration();
-        declaration();
-        break;
-      case TokenType.STRING_KW:
-        stringDeclaration();
-        declaration();
-        break;
-      case TokenType.CHAR_KW:
-        charDeclaration();
-        declaration();
-        break;
-      case TokenType.BOOLEAN_KW:
-        booleanDeclaration();
-        declaration();
-        break;
       case TokenType.VAR:
         varDeclaration();
         declaration();
@@ -95,77 +75,6 @@ public class Parser {
         break;
     }
 
-  }
-
-  private void intInit(){
-    if (tokens.get(currentTokenIndex).getType() == TokenType.EQUAL) {
-      match(TokenType.EQUAL);
-      expression();
-    }
-  }
-
-  private void doubleInit(){
-    if (tokens.get(currentTokenIndex).getType() == TokenType.EQUAL) {
-      match(TokenType.EQUAL);
-      expression();
-    }
-  }
-
-  private void stringInit(){
-    if (tokens.get(currentTokenIndex).getType() == TokenType.EQUAL) {
-      match(TokenType.EQUAL);
-      expression();
-    }
-  }
-
-  private void charInit(){
-    if (tokens.get(currentTokenIndex).getType() == TokenType.EQUAL) {
-      match(TokenType.EQUAL);
-      expression();
-    }
-  }
-
-  private void booleanInit(){
-    if (tokens.get(currentTokenIndex).getType() == TokenType.EQUAL) {
-      match(TokenType.EQUAL);
-      expression();
-    }
-  }
-  
-  
-  private void intDeclaration() {
-    match(TokenType.INTEGER_KW);
-    match(TokenType.IDENTIFIER);
-    intInit();
-    match(TokenType.SEMICOLON);
-  }
-  
-  private void doubleDeclaration() {
-    match(TokenType.DOUBLE_KW);
-    match(TokenType.IDENTIFIER);
-    doubleInit();
-    match(TokenType.SEMICOLON);
-  }
-  
-  private void stringDeclaration() {
-    match(TokenType.STRING_KW);
-    match(TokenType.IDENTIFIER);
-    stringInit();
-    match(TokenType.SEMICOLON);
-  }
-  
-  private void charDeclaration() {
-    match(TokenType.CHAR_KW);
-    match(TokenType.IDENTIFIER);
-    charInit();
-    match(TokenType.SEMICOLON);
-  }
-  
-  private void booleanDeclaration() {
-    match(TokenType.BOOLEAN_KW);
-    match(TokenType.IDENTIFIER);
-    booleanInit();
-    match(TokenType.SEMICOLON);
   }
 
   private void functionDeclaration() {
@@ -194,9 +103,24 @@ public class Parser {
 
   private void varDeclaration() {
     match(TokenType.VAR);
+    varTypeOpt();
     match(TokenType.IDENTIFIER);
     varInit();
     match(TokenType.SEMICOLON);
+  }
+
+  private void varTypeOpt(){
+    if (tokens.get(currentTokenIndex).getType() == TokenType.INTEGER_KW) {
+      match(TokenType.INTEGER_KW);
+    } else if (tokens.get(currentTokenIndex).getType() == TokenType.DOUBLE_KW) {
+      match(TokenType.DOUBLE_KW);
+    } else if (tokens.get(currentTokenIndex).getType() == TokenType.STRING_KW) {
+      match(TokenType.STRING_KW);
+    } else if (tokens.get(currentTokenIndex).getType() == TokenType.CHAR_KW) {
+      match(TokenType.CHAR_KW);
+    } else if (tokens.get(currentTokenIndex).getType() == TokenType.BOOLEAN_KW) {
+      match(TokenType.BOOLEAN_KW);
+    } 
   }
 
   private void varInit() {
@@ -305,21 +229,6 @@ public class Parser {
       case TokenType.VAR:
         varDeclaration();
         break;
-      case TokenType.INTEGER_KW:
-        intDeclaration();
-        break;
-      case TokenType.DOUBLE_KW:
-        doubleDeclaration();
-        break;
-      case TokenType.STRING_KW:
-        stringDeclaration();
-        break;
-      case TokenType.CHAR_KW:
-        charDeclaration();
-        break;
-      case TokenType.BOOLEAN_KW:
-        booleanDeclaration();
-        break;
       case TokenType.SEMICOLON:
         match(TokenType.SEMICOLON);
         break;
@@ -347,8 +256,6 @@ public class Parser {
   private void forStatementInc(){
     if(expressionTokens.contains(tokens.get(currentTokenIndex).getType())) {
       expression();
-    } else {
-      throw new UnexpectedTokenException("Statement token", tokens.get(currentTokenIndex).getType(), tokens.get(currentTokenIndex).getLine());
     }
   }
 
@@ -530,9 +437,12 @@ public class Parser {
     }
   }
 
+  // Modified to instead of a primary, it must to be an identifier to be a call
   private void call() {
     primary();
-    callOpt();
+    if(tokens.get(currentTokenIndex-1).getType() == TokenType.IDENTIFIER) {
+      callOpt();
+    }
   }
 
   private void callOpt() {

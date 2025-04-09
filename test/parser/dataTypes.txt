@@ -1,38 +1,38 @@
 // Test file for data types in the language
 
 // Integer declarations and operations
-int a = 10;
-int b = -5;
-int c = a + b * 2;  // Should be 0 with proper precedence
-int d = (a + b) * 2; // Should be 10 with parentheses
+var int a = 10;
+var int b = -5;
+var int c = a + b * 2;  // Should be 0 with proper precedence
+var int d = (a + b) * 2; // Should be 10 with parentheses
 print c;
 print d;
 
 // Double declarations and operations
-double x = 3.14;
-double y = 2.5;
-double z = x * y;  // Should be 7.85
-double w = 1.5E2;  // Scientific notation: 150.0
+var double x = 3.14;
+var double y = 2.5;
+var double z = x * y;  // Should be 7.85
+var double w = 1.5E2;  // Scientific notation: 150.0
 print z;
 print w;
 
 // String declarations and operations
-string greeting = "Hello";
-string name = "World";
-string message = greeting + ", " + name + "!";
+var string greeting = "Hello";
+var string name = "World";
+var string message = greeting + ", " + name + "!";
 print greeting;
 print message;
 
 // Character declarations
-char firstLetter = 'H';
-char lastLetter = '!';
+var char firstLetter = 'H';
+var char lastLetter = '!';
 print firstLetter;
 print lastLetter;
 
 // Boolean declarations and logical operations
-boolean isTrue = true;
-boolean isFalse = false;
-boolean result = isTrue and isFalse;
+var boolean isTrue = true;
+var boolean isFalse = false;
+var boolean result = isTrue and isFalse;
 print isTrue;
 print isFalse;
 print result;
@@ -63,9 +63,9 @@ fun greet( personName) {
 
 // Nested blocks with different typed variables
 {
-  int blockVar = 100;
+  var int blockVar = 100;
   {
-    double nestedVar = 99.9;
+    var double nestedVar = 99.9;
     print blockVar;
     print nestedVar;
   }
@@ -74,11 +74,11 @@ fun greet( personName) {
 
 // Type in control structures
 if (isTrue and isFalse) {
-  string conditionalVar = "Condition is true";
+  var string conditionalVar = "Condition is true";
   print conditionalVar;
 }
 
 // Testing all primitive types in a for loop
-for (int i = 0; i < 5; i = i + 1) {
+for (var int i = 0; i < 5; i = i + 1) {
   print i;
 }

@@ -29,7 +29,7 @@ public class Lexer {
     List<Token> tokens = new ArrayList<>();
 
     while (!isAtEnd()) {
-      if (Character.isAlphabetic(peek())) {
+      if (Character.isAlphabetic(peek()) || peek() == '_') {
         tokens.add(alphLexeme());
       } else if (Character.isDigit(peek())) {
         tokens.add(number());
@@ -70,7 +70,7 @@ public class Lexer {
    */
   private Token alphLexeme() {
     int start = current;
-    while (Character.isAlphabetic(peek()) || Character.isDigit(peek())) {
+    while (Character.isAlphabetic(peek()) || Character.isDigit(peek()) || peek() == '_') {
       advance();
     }
     String text = source.substring(start, current);
