@@ -1,0 +1,16 @@
+package com.github.irmindev.model.expressions;
+
+import com.github.irmindev.model.Token;
+
+public class ExpressionRelational extends Expression{
+    final Expression left;
+    final Token operator;
+    final Expression right;
+
+    ExpressionRelational(Expression left, Token operator, Expression right) {
+        this.left = left;
+        this.operator = operator;
+        this.right = right;
+    }
+
+}

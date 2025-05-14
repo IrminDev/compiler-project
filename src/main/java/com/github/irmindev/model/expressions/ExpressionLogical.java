@@ -1,0 +1,15 @@
+package com.github.irmindev.model.expressions;
+
+import com.github.irmindev.model.Token;
+public class ExpressionLogical extends Expression{
+    final Expression left;
+    final Token operator;
+    final Expression right;
+
+    ExpressionLogical(Expression left, Token operator, Expression right) {
+        this.left = left;
+        this.operator = operator;
+        this.right = right;
+    }
+}
+
