@@ -6,7 +6,7 @@ public class ExpressionUnary extends Expression{
     final Token operator;
     final Expression right;
 
-    ExpressionUnary(Token operator, Expression right) {
+    public ExpressionUnary(Token operator, Expression right) {
         this.operator = operator;
         this.right = right;
     }

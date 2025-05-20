@@ -5,9 +5,13 @@ import java.util.Set;
 
 import com.github.irmindev.model.Token;
 import com.github.irmindev.model.TokenType;
+import com.github.irmindev.model.Token.ValueToken;
 import com.github.irmindev.model.exception.UnexpectedTokenException;
 import com.github.irmindev.model.expressions.Expression;
+import com.github.irmindev.model.expressions.ExpressionCallFunction;
 import com.github.irmindev.model.expressions.ExpressionLiteral;
+import com.github.irmindev.model.expressions.ExpressionLogical;
+import com.github.irmindev.model.expressions.ExpressionUnary;
 import com.github.irmindev.model.statements.Statement;
 import com.github.irmindev.model.statements.StatementBlock;
 import com.github.irmindev.model.statements.StatementBoolean;
@@ -180,18 +184,20 @@ public class Parser {
     return null;
   }
 
-  private void arguments() {
+  private List<Expression> arguments() {
+    List<Expression> arguments = List.of();
     if (tokens.get(currentTokenIndex).getType() != TokenType.RIGHT_PAREN) {
-      expression();
-      argumentsOpt();
+      arguments().add(expression());
+      argumentsOpt(arguments);
     }
+    return arguments;
   }
 
-  private void argumentsOpt() {
+  private void argumentsOpt(List<Expression> arguments) {
     if (tokens.get(currentTokenIndex).getType() == TokenType.COMMA) {
       match(TokenType.COMMA);
-      expression();
-      argumentsOpt();
+      arguments.add(expression());
+      argumentsOpt(arguments);
     }
   }
 
@@ -383,6 +389,7 @@ public class Parser {
   private void logicOrOpt() {
     if (TokenType.OR.equals(tokens.get(currentTokenIndex).getType())) {
       match(TokenType.OR);
+      return new ExpressionLogical()
       logicOr();
     }
   }
@@ -487,52 +494,62 @@ public class Parser {
     }
   }
 
-  private void unary() {
+  private Expression unary() {
     switch (tokens.get(currentTokenIndex).getType()) {
       case TokenType.BANG:
         match(TokenType.BANG);
-        unary();
+        Token operator = previous();
+        Expression exp = unary();
+        ExpressionUnary unaryExp = new ExpressionUnary(operator, exp);
         break;
       case TokenType.MINUS:
         match(TokenType.MINUS);
         unary();
         break;
       default:
-        call();
-        break;
+        return call();
     }
   }
 
   // Modified to instead of a primary, it must to be an identifier to be a call
-  private void call() {
-    primary();
+  private Expression call() {
+    Expression exp = primary();
     if(tokens.get(currentTokenIndex-1).getType() == TokenType.IDENTIFIER) {
-      callOpt();
+      List<Expression> args = callOpt();
+      ExpressionCallFunction call = new ExpressionCallFunction(exp, args);
+      return call;
     }
+    return exp;
   }
 
-  private void callOpt() {
+  private List<Expression> callOpt() {
     if (TokenType.LEFT_PAREN.equals(tokens.get(currentTokenIndex).getType())) {
       match(TokenType.LEFT_PAREN);
-      arguments();
+      List<Expression> args = arguments();
       match(TokenType.RIGHT_PAREN);
+      return args;
     }
+    return null;
   }
 
-  private void primary() {
+  private Expression primary() {
     switch (tokens.get(currentTokenIndex).getType()) {
       case TokenType.INTEGER:
         match(TokenType.INTEGER);
-        break;
+        ValueToken previous = (ValueToken)previous();
+        Object value = previous.getLiteral();
+        return new ExpressionLiteral(value);
       case TokenType.DOUBLE:
         match(TokenType.DOUBLE);
-        break;
+        ValueToken previousDouble = (ValueToken)previous();
+        Object valueDouble = previousDouble.getLiteral();
+        return new ExpressionLiteral(valueDouble);
       case TokenType.STRING:
         match(TokenType.STRING);
-        break;
+
       case TokenType.TRUE:
         match(TokenType.TRUE);
-        break;
+        return new ExpressionLiteral(true);
       case TokenType.FALSE:
         match(TokenType.FALSE);
         break;
@@ -547,9 +564,9 @@ public class Parser {
         break;
       case TokenType.LEFT_PAREN:
         match(TokenType.LEFT_PAREN);
-        expression();
+        Expression exp = expression();
         match(TokenType.RIGHT_PAREN);
-        break;
+        return exp;
       default:
         throw new UnexpectedTokenException("Value token", tokens.get(currentTokenIndex).getType(), tokens.get(currentTokenIndex).getLine());
     }

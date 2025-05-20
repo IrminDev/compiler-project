@@ -7,7 +7,7 @@ public class ExpressionCallFunction extends Expression{
     // final Token paren;
     final List<Expression> arguments;
 
-    ExpressionCallFunction(Expression callee, /*Token paren,*/ List<Expression> arguments) {
+    public ExpressionCallFunction(Expression callee, /*Token paren,*/ List<Expression> arguments) {
         this.callee = callee;
         // this.paren = paren;
         this.arguments = arguments;
