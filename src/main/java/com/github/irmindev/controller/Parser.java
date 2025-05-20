@@ -6,6 +6,22 @@ import java.util.Set;
 import com.github.irmindev.model.Token;
 import com.github.irmindev.model.TokenType;
 import com.github.irmindev.model.exception.UnexpectedTokenException;
+import com.github.irmindev.model.expressions.Expression;
+import com.github.irmindev.model.expressions.ExpressionLiteral;
+import com.github.irmindev.model.statements.Statement;
+import com.github.irmindev.model.statements.StatementBlock;
+import com.github.irmindev.model.statements.StatementBoolean;
+import com.github.irmindev.model.statements.StatementChar;
+import com.github.irmindev.model.statements.StatementDouble;
+import com.github.irmindev.model.statements.StatementExpression;
+import com.github.irmindev.model.statements.StatementFunction;
+import com.github.irmindev.model.statements.StatementIf;
+import com.github.irmindev.model.statements.StatementInteger;
+import com.github.irmindev.model.statements.StatementLoop;
+import com.github.irmindev.model.statements.StatementPrint;
+import com.github.irmindev.model.statements.StatementReturn;
+import com.github.irmindev.model.statements.StatementString;
+import com.github.irmindev.model.statements.StatementVar;
 
 public class Parser {
   private final List<Token> tokens;
@@ -34,10 +50,14 @@ public class Parser {
     TokenType.LEFT_BRACE
   );
 
+  
   public Parser(List<Token> tokens) {
     this.tokens = tokens;
   }
-
+  
+  private Token previous(){
+    return tokens.get(currentTokenIndex - 1);
+  }
   /**
    * Parses the tokens and builds an abstract syntax tree (AST) **PENDING.
    * This method is the top-level entry point for parsing the tokens.
@@ -52,82 +72,112 @@ public class Parser {
    * 
    * @author Rodolfo
    */
-  private void program() {
-    declaration();
+  private List<Statement> program() {
+    List<Statement> statements = List.of();
+    declaration(statements);
+    return statements;
   }
 
-  private void declaration() {
+  private void declaration(List<Statement> statements) {
     switch (tokens.get(currentTokenIndex).getType()) {
       case TokenType.FUN:
-        functionDeclaration();
-        declaration();
+        statements.add(functionDeclaration());
+        declaration(statements);
         break;
       case TokenType.VAR:
-        varDeclaration();
-        declaration();
+        statements.add(varDeclaration());
+        declaration(statements);
         break;
       default:
         if (statementTokens.contains(tokens.get(currentTokenIndex).getType())
           || expressionTokens.contains(tokens.get(currentTokenIndex).getType())) {
           statement();
-          declaration();
+          declaration(statements);
         }
         break;
     }
 
   }
 
-  private void functionDeclaration() {
+  private Statement functionDeclaration() {
     match(TokenType.FUN);
     match(TokenType.IDENTIFIER);
+    Token functionName = previous();
     match(TokenType.LEFT_PAREN);
-    parameters();
+    List<Token> params = parameters();
     match(TokenType.RIGHT_PAREN);
-    block();
+    StatementBlock body = block();
+    return new StatementFunction(functionName, params, body);
   }
 
-  private void parameters() {
+  private List<Token> parameters() {
+    List<Token> parameters = List.of();
     if(tokens.get(currentTokenIndex).getType() == TokenType.IDENTIFIER) {
       match(TokenType.IDENTIFIER);
-      parametersOpt();
+      parameters.add(previous());
+      parametersOpt(parameters);
     }
+    return parameters;
   }
 
-  private void parametersOpt() {
+  private void parametersOpt(List<Token> parameters) {
     if(tokens.get(currentTokenIndex).getType() == TokenType.COMMA) {
       match(TokenType.COMMA);
       match(TokenType.IDENTIFIER);
-      parametersOpt();
+      parameters.add(previous());
+      parametersOpt(parameters);
     }
   }
 
-  private void varDeclaration() {
+  private Statement varDeclaration() {
     match(TokenType.VAR);
-    varTypeOpt();
+    TokenType type = varTypeOpt();
     match(TokenType.IDENTIFIER);
-    varInit();
+    Token identifier = previous();
+    Expression init = varInit();
     match(TokenType.SEMICOLON);
+    switch (type) {
+      case INTEGER_KW:
+        return new StatementInteger(identifier, init);
+      case DOUBLE_KW:
+        return new StatementDouble(identifier, init);
+      case STRING_KW:
+        return new StatementString(identifier, init);
+      case CHAR_KW:
+        return new StatementChar(identifier, init);
+      case BOOLEAN_KW:
+        return new StatementBoolean(identifier, init);
+      default:
+        return new StatementVar(identifier, init);
+    }
   }
 
-  private void varTypeOpt(){
+  private TokenType varTypeOpt(){
     if (tokens.get(currentTokenIndex).getType() == TokenType.INTEGER_KW) {
       match(TokenType.INTEGER_KW);
+      return TokenType.INTEGER_KW;
     } else if (tokens.get(currentTokenIndex).getType() == TokenType.DOUBLE_KW) {
       match(TokenType.DOUBLE_KW);
+      return TokenType.DOUBLE_KW;
     } else if (tokens.get(currentTokenIndex).getType() == TokenType.STRING_KW) {
       match(TokenType.STRING_KW);
+      return TokenType.STRING_KW;
     } else if (tokens.get(currentTokenIndex).getType() == TokenType.CHAR_KW) {
       match(TokenType.CHAR_KW);
+      return TokenType.CHAR_KW;
     } else if (tokens.get(currentTokenIndex).getType() == TokenType.BOOLEAN_KW) {
       match(TokenType.BOOLEAN_KW);
+      return TokenType.BOOLEAN_KW;
     } 
+    return null;
   }
 
-  private void varInit() {
+  private Expression varInit() {
     if (tokens.get(currentTokenIndex).getType() == TokenType.EQUAL) {
       match(TokenType.EQUAL);
-      expression();
+      return expression();
     }
+    return null;
   }
 
   private void arguments() {
@@ -151,140 +201,155 @@ public class Parser {
    * @author Angel
    */
 
-   private void statement() {
+   private Statement statement() {
     TokenType type = tokens.get(currentTokenIndex).getType();
     switch (type) {
       case TokenType.PRINT:
-        printStatement();
-        break;
+        return printStatement();
       case TokenType.IF:
-        ifStatement();
-        break;
+        return ifStatement();
       case TokenType.FOR:
-        forStatement();
-        break;
+        return forStatement();
       case TokenType.WHILE:
-        whileStatement();
-        break;
+        return whileStatement();
       case TokenType.RETURN:
-        returnStatement();
-        break;
+        return returnStatement();
       case TokenType.LEFT_BRACE:
-        block();
-        break;
+        return block();
       default:
         if(expressionTokens.contains(type)) {
-          expressionStatement();
+          return expressionStatement();
         } else {
           throw new UnexpectedTokenException("Statement token", type, tokens.get(currentTokenIndex).getLine());
         }
-        break;
-    }
+      }
   }
 
-  private void expressionStatement() {
-    expression();
+  private Statement expressionStatement() {
+    Expression exp = expression();
     match(TokenType.SEMICOLON);
+    return new StatementExpression(exp);
   }
 
-  private void printStatement() {
+  private Statement printStatement() {
     match(TokenType.PRINT);
-    expression();
+    Statement statement = new StatementPrint(expression());
     match(TokenType.SEMICOLON);
+    return statement;
   }
 
-  private void ifStatement() {
+  private Statement ifStatement() {
     match(TokenType.IF);
     match(TokenType.LEFT_PAREN);
-    expression();
+    Expression cond = expression();
     match(TokenType.RIGHT_PAREN);
-    statement();
-    elseStatement();
+    Statement stm = statement();
+    Statement elseStm = elseStatement();
+    return new StatementIf(cond, stm, elseStm);
   }
 
-  private void elseStatement() {
+  private Statement elseStatement() {
     if (tokens.get(currentTokenIndex).getType() == TokenType.ELSE) {
       match(TokenType.ELSE);
-      statement();
+      return statement();
+    }
+    return null;
+  }
+
+  private Statement forStatement() {
+    match(TokenType.FOR);
+    match(TokenType.LEFT_PAREN);
+    Statement init = forStatementInit();
+
+    Expression cond = forStatementCond();
+
+    Statement inc = new StatementExpression(forStatementInc());
+
+    match(TokenType.RIGHT_PAREN);
+
+    Statement body = statement();
+    if (inc != null) {
+      StatementBlock block = new StatementBlock(List.of(body, inc));
+      body = block;
+    }
+
+    Statement loop = new StatementLoop(cond, body);
+
+    if (init != null) {
+      StatementBlock block = new StatementBlock(List.of(init, loop));
+      return block;
+    } else {
+      return loop;
     }
   }
 
-  private void forStatement() {
-    match(TokenType.FOR);
-    match(TokenType.LEFT_PAREN);
-
-    forStatementInit();
-
-    forStatementCond();
-
-    forStatementInc();
-
-    match(TokenType.RIGHT_PAREN);
-
-    statement();
-  }
-
-  private void forStatementInit(){
+  private Statement forStatementInit(){
     switch (tokens.get(currentTokenIndex).getType()) {
       case TokenType.VAR:
-        varDeclaration();
-        break;
+        return varDeclaration();
       case TokenType.SEMICOLON:
         match(TokenType.SEMICOLON);
-        break;
+        return null;
       default:
         if(expressionTokens.contains(tokens.get(currentTokenIndex).getType())) {
-          expressionStatement();
+          return expressionStatement();
         } else {
           throw new UnexpectedTokenException("Statement token", tokens.get(currentTokenIndex).getType(), tokens.get(currentTokenIndex).getLine());
         }
-        break;
     }
   }
 
-  private void forStatementCond(){
+  private Expression forStatementCond(){
     if (tokens.get(currentTokenIndex).getType() == TokenType.SEMICOLON) {
       match(TokenType.SEMICOLON);
+      return new ExpressionLiteral(true);
     } else if (expressionTokens.contains(tokens.get(currentTokenIndex).getType())) {
-      expression();
+      Expression exp = expression();
       match(TokenType.SEMICOLON);
+      return exp;
     } else {
       throw new UnexpectedTokenException("Statement token", tokens.get(currentTokenIndex).getType(), tokens.get(currentTokenIndex).getLine());
     }
   }
 
-  private void forStatementInc(){
+  private Expression forStatementInc(){
     if(expressionTokens.contains(tokens.get(currentTokenIndex).getType())) {
-      expression();
+      return expression();
     }
+
+    return null;
   }
 
-  private void whileStatement() {
+  private Statement whileStatement() {
     match(TokenType.WHILE);
     match(TokenType.LEFT_PAREN);
-    expression();
+    Expression cond = expression();
     match(TokenType.RIGHT_PAREN);
-    statement();
+    Statement block = statement();
+    return new StatementLoop(cond, block);
   }
 
-  private void returnStatement() {
+  private Statement returnStatement() {
     match(TokenType.RETURN);
-    returnExpOpt();
+    StatementReturn rtn = new StatementReturn(returnExpOpt());
     match(TokenType.SEMICOLON);
+    return rtn;
   }
 
-  private void returnExpOpt() {
+  private Expression returnExpOpt() {
     if(expressionTokens.contains(tokens.get(currentTokenIndex).getType())) {
-      expression();
+      return expression();
     }
+
+    return null;
   }
 
-  private void block() {
+  private StatementBlock block() {
     match(TokenType.LEFT_BRACE);
-    
-    declaration();
-    
+    List<Statement> statements = List.of();
+    declaration(statements);
     match(TokenType.RIGHT_BRACE);
+    return new StatementBlock(statements);
   }
 
   /**
@@ -293,8 +358,9 @@ public class Parser {
    * @author Irmin
    */
 
-  private void expression() {
+  private Expression expression() {
     assignment();
+    return null;
   }
 
   private void assignment() {

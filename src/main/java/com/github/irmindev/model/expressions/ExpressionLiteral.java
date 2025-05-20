@@ -1,9 +1,9 @@
 package com.github.irmindev.model.expressions;
 
-class ExpressionLiteral extends Expression {
+public class ExpressionLiteral extends Expression {
     final Object value;
 
-    ExpressionLiteral(Object value) {
+    public ExpressionLiteral(Object value) {
         this.value = value;
     }
 }

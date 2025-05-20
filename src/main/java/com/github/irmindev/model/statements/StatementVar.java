@@ -4,7 +4,7 @@ import com.github.irmindev.model.expressions.Expression;
 
 import com.github.irmindev.model.Token;
 
-public abstract class StatementVar extends Statement {
+public class StatementVar extends Statement {
     private final Token identifier;
     private final Expression initializer;
 

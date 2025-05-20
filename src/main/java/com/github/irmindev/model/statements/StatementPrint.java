@@ -1,6 +1,6 @@
 package com.github.irmindev.model.statements;
 
-import java.beans.Expression;
+import com.github.irmindev.model.expressions.Expression;
 
 public class StatementPrint extends Statement {
     private final Expression expression;
