@@ -6,7 +6,7 @@ public class ExpressionLogical extends Expression{
     final Token operator;
     final Expression right;
 
-    ExpressionLogical(Expression left, Token operator, Expression right) {
+    public ExpressionLogical(Expression left, Token operator, Expression right) {
         this.left = left;
         this.operator = operator;
         this.right = right;

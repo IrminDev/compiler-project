@@ -5,7 +5,7 @@ public class ExpressionAssign extends Expression{
     final Token name;
     final Expression value;
 
-    ExpressionAssign(Token name, Expression value) {
+    public ExpressionAssign(Token name, Expression value) {
         this.name = name;
         this.value = value;
     }

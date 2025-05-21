@@ -8,10 +8,15 @@ import com.github.irmindev.model.TokenType;
 import com.github.irmindev.model.Token.ValueToken;
 import com.github.irmindev.model.exception.UnexpectedTokenException;
 import com.github.irmindev.model.expressions.Expression;
-import com.github.irmindev.model.expressions.ExpressionCallFunction;
-import com.github.irmindev.model.expressions.ExpressionLiteral;
-import com.github.irmindev.model.expressions.ExpressionLogical;
+import com.github.irmindev.model.expressions.ExpressionArit;
 import com.github.irmindev.model.expressions.ExpressionUnary;
+import com.github.irmindev.model.expressions.ExpressionVariable;
+import com.github.irmindev.model.expressions.ExpressionLiteral;
+import com.github.irmindev.model.expressions.ExpressionRelational;
+import com.github.irmindev.model.expressions.ExpressionLogical;
+import com.github.irmindev.model.expressions.ExpressionCallFunction;
+import com.github.irmindev.model.expressions.ExpressionAssign;
+import com.github.irmindev.model.expressions.ExpressionGrouping;
 import com.github.irmindev.model.statements.Statement;
 import com.github.irmindev.model.statements.StatementBlock;
 import com.github.irmindev.model.statements.StatementBoolean;
@@ -365,159 +370,191 @@ public class Parser {
    */
 
   private Expression expression() {
-    assignment();
-    return null;
+    Expression left  = assignment();
+    return left;
   }
 
-  private void assignment() {
-    logicOr();
-    assignmentOpc();
+  private Expression assignment() {
+    Expression left = logicOr();
+    return assignmentOpc(left);
   }
 
-  private void assignmentOpc() {
+  private Expression assignmentOpc(Expression left) {
     if (TokenType.EQUAL.equals(tokens.get(currentTokenIndex).getType())) {
       match(TokenType.EQUAL);
-      assignment();
+      Token name = previous();
+      Expression value = logicOr();
+      return assignmentOpc(new ExpressionAssign(name, value ));
     }
+    return left;
   }
 
-  private void logicOr() {
-    logicAnd();
-    logicOrOpt();
+  private Expression logicOr() {
+    Expression left = logicAnd();
+    return logicOrOpt(left);
   }
 
-  private void logicOrOpt() {
+  private Expression logicOrOpt(Expression left) {
     if (TokenType.OR.equals(tokens.get(currentTokenIndex).getType())) {
       match(TokenType.OR);
-      return new ExpressionLogical()
-      logicOr();
+      Token operator = previous();
+      Expression right = logicAnd();
+      Expression join =  new ExpressionLogical(left, operator, right);
+      return logicOrOpt(join);
     }
+    return left;
   }
 
-  private void logicAnd() {
-    equality();
-    logicAndOpt();
+  private Expression logicAnd() {
+    Expression left =  equality();
+    return logicAndOpt(left);
   }
 
-  private void logicAndOpt() {
+  private Expression logicAndOpt(Expression left) {
     if (TokenType.AND.equals(tokens.get(currentTokenIndex).getType())) {
       match(TokenType.AND);
-      logicAnd();
+      Token operator = previous();
+      Expression right = equality();
+      Expression join = new ExpressionLogical(left, operator, right);
+      return logicAndOpt(join);
     }
+   return left;
   }
 
-  private void equality() {
-    comparison();
-    equalityOpt();
+  private Expression equality() {
+   Expression left =  comparison();
+    return equalityOpt(left);
   }
 
-  private void equalityOpt() {
+  private Expression equalityOpt(Expression left) {
     switch (tokens.get(currentTokenIndex).getType()) {
-      case TokenType.EQUAL_EQUAL:
+      case TokenType.EQUAL_EQUAL: {
         match(TokenType.EQUAL_EQUAL);
-        equality();
-        break;
-      case TokenType.BANG_EQUAL:
+        Token operator = previous();
+        Expression right = comparison();
+        return equalityOpt(new ExpressionRelational(left, operator, right));
+      }
+      case TokenType.BANG_EQUAL: {
         match(TokenType.BANG_EQUAL);
-        equality();
-        break;
+        Token operator = previous();
+        Expression right = comparison();
+        return equalityOpt(new ExpressionRelational(left, operator, right));
+      }
       default:
-        break;
+        return left;
     }
   }
 
-  private void comparison() {
-    term();
-    comparisonOpt();
+  private Expression comparison() {
+    Expression left = term();
+    return comparisonOpt(left);
   }
 
-  private void comparisonOpt() {
+  private Expression comparisonOpt(Expression left) {
     switch (tokens.get(currentTokenIndex).getType()) {
-      case TokenType.GREATER:
+      case TokenType.GREATER: {
         match(TokenType.GREATER);
-        comparison();
-        break;
-      case TokenType.GREATER_EQUAL:
+        Token operator = previous();
+        Expression right = term();
+        return comparisonOpt(new ExpressionRelational(left, operator, right));
+      }
+      case TokenType.GREATER_EQUAL: {
         match(TokenType.GREATER_EQUAL);
-        comparison();
-        break;
-      case TokenType.LESS:
+        Token operator = previous();
+        Expression right = term();
+        return comparisonOpt(new ExpressionRelational(left, operator, right));
+      }
+      case TokenType.LESS: {
         match(TokenType.LESS);
-        comparison();
-        break;
+        Token operator = previous();
+        Expression right = term();
+        return comparisonOpt(new ExpressionRelational(left, operator, right));
+      }
       case TokenType.LESS_EQUAL:
         match(TokenType.LESS_EQUAL);
-        comparison();
-        break;
+        Token operator = previous();
+        Expression right = term();
+        return comparisonOpt(new ExpressionRelational(left,operator,right));
       default:
-        break;
+        return left;
     }
   }
 
-  private void term() {
-    factor();
-    termOpt();
+  private Expression term() {
+    Expression left = factor();
+    return termOpt(left);
   }
 
-  private void termOpt() {
+  private Expression  termOpt(Expression left) {
     switch (tokens.get(currentTokenIndex).getType()) {
-      case TokenType.PLUS:
+      case TokenType.PLUS: {
         match(TokenType.PLUS);
-        term();
-        break;
-      case TokenType.MINUS:
+        Token operator = previous();
+        Expression right = factor();
+        return termOpt(new ExpressionArit(left,operator, right));
+      }
+      case TokenType.MINUS: {
         match(TokenType.MINUS);
-        term();
-        break;
+        Token operator = previous();
+        Expression right = factor();
+        return termOpt(new ExpressionArit(left, operator, right));
+      }
       default:
-        break;
+        return left;
     }
   }
 
-  private void factor() {
-    unary();
-    factorOpt();
+  private Expression factor() {
+    Expression left = unary();
+    return factorOpt(left);
   }
 
-  private void factorOpt() {
+  private Expression factorOpt(Expression left) {
     switch (tokens.get(currentTokenIndex).getType()) {
-      case TokenType.STAR:
+      case TokenType.STAR: {
         match(TokenType.STAR);
-        factor();
-        break;
-      case TokenType.SLASH:
+        Token operator = previous();
+        Expression right = unary();
+        return factorOpt(new ExpressionArit(left, operator, right));
+      }
+      case TokenType.SLASH:{
         match(TokenType.SLASH);
-        factor();
-        break;
-      default:
-        break;
+        Token operator = previous();
+        Expression right = unary();
+        return factorOpt(new ExpressionArit(left, operator, right));
+        }
+        default:
+        return left;
     }
   }
 
   private Expression unary() {
     switch (tokens.get(currentTokenIndex).getType()) {
-      case TokenType.BANG:
+      case TokenType.BANG: {
         match(TokenType.BANG);
         Token operator = previous();
         Expression exp = unary();
-        ExpressionUnary unaryExp = new ExpressionUnary(operator, exp);
-        break;
-      case TokenType.MINUS:
+        return new ExpressionUnary(operator, exp);
+      }
+      case TokenType.MINUS: {
         match(TokenType.MINUS);
-        unary();
-        break;
+        Token operator = previous();
+        Expression exp = unary();
+        return new ExpressionUnary(operator, exp);
+      }
       default:
         return call();
     }
   }
 
+//DUDA con respecto a la verificación del siguiete token
+
   // Modified to instead of a primary, it must to be an identifier to be a call
   private Expression call() {
     Expression exp = primary();
-    if(tokens.get(currentTokenIndex-1).getType() == TokenType.IDENTIFIER) {
+    if(tokens.get(currentTokenIndex-1).getType() == TokenType.LEFT_PAREN) {
       List<Expression> args = callOpt();
-      ExpressionCallFunction call = new ExpressionCallFunction(exp, args);
-      return call;
+      return new ExpressionCallFunction(exp, args);
     }
     return exp;
   }
@@ -546,22 +583,27 @@ public class Parser {
         return new ExpressionLiteral(valueDouble);
       case TokenType.STRING:
         match(TokenType.STRING);
-
+        ValueToken previousString = (ValueToken)previous();
+        Object valueString = previousString.getLiteral();
+        return new ExpressionLiteral(valueString);
       case TokenType.TRUE:
         match(TokenType.TRUE);
         return new ExpressionLiteral(true);
       case TokenType.FALSE:
         match(TokenType.FALSE);
-        break;
+        return new ExpressionLiteral(false);
       case TokenType.NULL:
         match(TokenType.NULL);
-        break;
+        return new ExpressionLiteral(null);
       case TokenType.IDENTIFIER:
         match(TokenType.IDENTIFIER);
-        break;
+        Token TokenID = previous();
+        return new ExpressionVariable(TokenID);
       case TokenType.CHAR:
         match(TokenType.CHAR);
-        break;
+        ValueToken previousChar = (ValueToken)previous();
+        Object valueChar = previousChar.getLiteral();
+        return new ExpressionLiteral(valueChar);
       case TokenType.LEFT_PAREN:
         match(TokenType.LEFT_PAREN);
         Expression exp = expression();

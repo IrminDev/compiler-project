@@ -7,7 +7,7 @@ public class ExpressionRelational extends Expression{
     final Token operator;
     final Expression right;
 
-    ExpressionRelational(Expression left, Token operator, Expression right) {
+    public ExpressionRelational(Expression left, Token operator, Expression right) {
         this.left = left;
         this.operator = operator;
         this.right = right;

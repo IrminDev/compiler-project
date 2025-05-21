@@ -2,10 +2,10 @@ package com.github.irmindev.model.expressions;
 
 import com.github.irmindev.model.Token;
 
-class ExpressionVariable extends Expression {
+public class ExpressionVariable extends Expression {
     final Token name;
 
-    ExpressionVariable(Token name) {
+    public ExpressionVariable(Token name) {
         this.name = name;
     }
 }
