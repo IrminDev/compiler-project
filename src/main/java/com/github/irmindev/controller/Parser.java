@@ -1,5 +1,6 @@
 package com.github.irmindev.controller;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -82,7 +83,7 @@ public class Parser {
    * @author Rodolfo
    */
   private List<Statement> program() {
-    List<Statement> statements = List.of();
+    List<Statement> statements = new ArrayList<>();
     declaration(statements);
     return statements;
   }
@@ -120,7 +121,7 @@ public class Parser {
   }
 
   private List<Token> parameters() {
-    List<Token> parameters = List.of();
+    List<Token> parameters = new ArrayList<>();
     if(tokens.get(currentTokenIndex).getType() == TokenType.IDENTIFIER) {
       match(TokenType.IDENTIFIER);
       parameters.add(previous());
@@ -145,6 +146,9 @@ public class Parser {
     Token identifier = previous();
     Expression init = varInit();
     match(TokenType.SEMICOLON);
+    if(type == null) {
+      type = TokenType.VAR; // Default type if no type is specified
+    }
     switch (type) {
       case INTEGER_KW:
         return new StatementInteger(identifier, init);
@@ -190,9 +194,9 @@ public class Parser {
   }
 
   private List<Expression> arguments() {
-    List<Expression> arguments = List.of();
+    List<Expression> arguments = new ArrayList<>();
     if (tokens.get(currentTokenIndex).getType() != TokenType.RIGHT_PAREN) {
-      arguments().add(expression());
+      arguments.add(expression());
       argumentsOpt(arguments);
     }
     return arguments;
@@ -351,13 +355,12 @@ public class Parser {
     if(expressionTokens.contains(tokens.get(currentTokenIndex).getType())) {
       return expression();
     }
-
     return null;
   }
 
   private StatementBlock block() {
     match(TokenType.LEFT_BRACE);
-    List<Statement> statements = List.of();
+    List<Statement> statements = new ArrayList<>();
     declaration(statements);
     match(TokenType.RIGHT_BRACE);
     return new StatementBlock(statements);
@@ -370,7 +373,7 @@ public class Parser {
    */
 
   private Expression expression() {
-    Expression left  = assignment();
+    Expression left = assignment();
     return left;
   }
 
@@ -552,7 +555,7 @@ public class Parser {
   // Modified to instead of a primary, it must to be an identifier to be a call
   private Expression call() {
     Expression exp = primary();
-    if(tokens.get(currentTokenIndex-1).getType() == TokenType.LEFT_PAREN) {
+    if(tokens.get(currentTokenIndex-1).getType() == TokenType.IDENTIFIER) {
       List<Expression> args = callOpt();
       return new ExpressionCallFunction(exp, args);
     }
@@ -606,7 +609,7 @@ public class Parser {
         return new ExpressionLiteral(valueChar);
       case TokenType.LEFT_PAREN:
         match(TokenType.LEFT_PAREN);
-        Expression exp = expression();
+        ExpressionGrouping exp = new ExpressionGrouping(expression());
         match(TokenType.RIGHT_PAREN);
         return exp;
       default:
