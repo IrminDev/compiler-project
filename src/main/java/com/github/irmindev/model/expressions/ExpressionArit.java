@@ -23,4 +23,10 @@ public class ExpressionArit extends Expression{
     public Expression getRight() {
         return right;
     }
+
+    // DO this for all the expression classes
+    @Override
+    public <T> T accept(ExpressionVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
 }
