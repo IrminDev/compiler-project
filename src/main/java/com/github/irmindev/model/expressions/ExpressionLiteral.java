@@ -6,4 +6,12 @@ public class ExpressionLiteral extends Expression {
     public ExpressionLiteral(Object value) {
         this.value = value;
     }
+    public Object getValue() {
+        return value;
+    }
+
+    @Override
+    public <T> T accept(ExpressionVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
 }

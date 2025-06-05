@@ -12,5 +12,19 @@ public class ExpressionRelational extends Expression{
         this.operator = operator;
         this.right = right;
     }
+    public Expression getLeft() {
+        return left;
+    }
 
+    public Token getOperator() {
+        return operator;
+    }
+
+    public Expression getRight() {
+        return right;
+    }
+@Override
+    public <T> T accept(ExpressionVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
 }

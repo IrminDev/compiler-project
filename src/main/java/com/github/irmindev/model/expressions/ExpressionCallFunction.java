@@ -12,4 +12,16 @@ public class ExpressionCallFunction extends Expression{
         // this.paren = paren;
         this.arguments = arguments;
     }
+    public Expression getCallee() {
+        return callee;
+    }
+
+    public List<Expression> getArguments() {
+        return arguments;
+    }
+
+    @Override
+    public <T> T accept(ExpressionVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
 }

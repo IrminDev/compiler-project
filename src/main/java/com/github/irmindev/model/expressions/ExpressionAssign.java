@@ -17,4 +17,9 @@ public class ExpressionAssign extends Expression{
     public Expression getValue() {
         return value;
     }
+
+    @Override
+    public <T> T accept(ExpressionVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
 }

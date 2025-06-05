@@ -8,4 +8,12 @@ public class ExpressionVariable extends Expression {
     public ExpressionVariable(Token name) {
         this.name = name;
     }
+    public Token getName() {
+        return name;
+    }
+
+    @Override
+    public <T> T accept(ExpressionVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
 }
