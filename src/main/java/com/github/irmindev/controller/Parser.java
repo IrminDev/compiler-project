@@ -602,7 +602,7 @@ public class Parser {
       case TokenType.IDENTIFIER:
         match(TokenType.IDENTIFIER);
         Token TokenID = previous();
-        return new ExpressionVariable(TokenID);
+        return new ExpressionVariable((Token.Indetifier)TokenID);
       case TokenType.CHAR:
         match(TokenType.CHAR);
         ValueToken previousChar = (ValueToken)previous();

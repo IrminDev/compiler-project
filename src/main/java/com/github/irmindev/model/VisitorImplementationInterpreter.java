@@ -7,6 +7,9 @@ import com.github.irmindev.model.expressions.ExpressionGrouping;
 import com.github.irmindev.model.expressions.ExpressionLogical;
 import com.github.irmindev.model.expressions.ExpressionLiteral;
 import com.github.irmindev.model.expressions.ExpressionRelational;
+import com.github.irmindev.model.expressions.ExpressionAssign;
+import com.github.irmindev.model.expressions.ExpressionCallFunction;
+import com.github.irmindev.model.expressions.ExpressionVariable;
 import com.github.irmindev.model.expressions.ExpressionVisitor;
 import com.github.irmindev.model.statements.StatementVisitor;
 
@@ -157,5 +160,23 @@ public class VisitorImplementationInterpreter implements ExpressionVisitor<Objec
         if (a == null && b == null) return true;
         if (a == null) return false;
         return a.equals(b);
+    }
+
+    @Override
+    public Object visit(ExpressionVariable expression) {
+        return environment.getVariable(expression.getName().getLexeme());
+    }
+
+    @Override
+    public Object visit(ExpressionCallFunction expression) {
+
+        return null;
+    }
+
+    @Override
+    public Object visit(ExpressionAssign expression) {
+        Object value = evaluate(expression.getValue());
+        environment.assignValue(((Token.Indetifier)expression.getName()).getLexeme(), (VariableValue) value);
+        return value;
     }
 }
