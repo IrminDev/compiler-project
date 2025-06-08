@@ -19,4 +19,8 @@ public class StatementLoop extends Statement {
         return condition;
     }
     
+    @Override
+    public <T> T accept(StatementVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
 }

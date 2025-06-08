@@ -25,4 +25,8 @@ public class StatementIf extends Statement {
         return elseBlock;
     }
     
+    @Override
+    public <T> T accept(StatementVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
 }

@@ -12,4 +12,9 @@ public class StatementPrint extends Statement {
     public Expression getExpression() {
         return expression;
     }
+
+    @Override
+    public <T> T accept(StatementVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
 }

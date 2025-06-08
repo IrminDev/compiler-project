@@ -13,4 +13,8 @@ public class StatementReturn extends Statement {
         return value;
     }
     
+    @Override
+    public <T> T accept(StatementVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
 }

@@ -26,4 +26,9 @@ public class StatementFunction extends Statement{
     public List<Token> getParameters() {
         return parameters;
     }
+
+    @Override
+    public <T> T accept(StatementVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
 }

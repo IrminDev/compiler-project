@@ -555,7 +555,7 @@ public class Parser {
   // Modified to instead of a primary, it must to be an identifier to be a call
   private Expression call() {
     Expression exp = primary();
-    if(tokens.get(currentTokenIndex - 1).getType() == TokenType.IDENTIFIER
+    if(exp instanceof ExpressionVariable
         && tokens.get(currentTokenIndex).getType() == TokenType.LEFT_PAREN) {
       List<Expression> args = callOpt();
       return new ExpressionCallFunction(exp, args);

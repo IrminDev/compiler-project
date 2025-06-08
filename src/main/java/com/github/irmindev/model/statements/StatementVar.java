@@ -20,4 +20,9 @@ public class StatementVar extends Statement {
     public Expression getInitializer() {
         return initializer;
     }
+
+    @Override
+    public <T> T accept(StatementVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
 }
