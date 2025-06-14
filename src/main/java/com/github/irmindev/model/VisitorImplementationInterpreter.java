@@ -19,6 +19,14 @@ import com.github.irmindev.model.statements.StatementIf;
 import com.github.irmindev.model.statements.StatementLoop;
 import com.github.irmindev.model.statements.StatementReturn;
 import com.github.irmindev.model.statements.StatementVisitor;
+import com.github.irmindev.model.statements.StatementBoolean;
+import com.github.irmindev.model.statements.StatementChar;
+import com.github.irmindev.model.statements.StatementDouble;
+import com.github.irmindev.model.statements.StatementInteger;
+import com.github.irmindev.model.statements.StatementString;
+import com.github.irmindev.model.statements.StatementExpression;
+import com.github.irmindev.model.statements.StatementPrint;
+
 
 public class VisitorImplementationInterpreter implements ExpressionVisitor<VariableValue>, StatementVisitor<Void> {
     private final Environment global;
@@ -34,22 +42,25 @@ public class VisitorImplementationInterpreter implements ExpressionVisitor<Varia
     }
     
     @Override
-    public Object visit(ExpressionUnary expr) {
-        Object right = evaluate(expr.getRight());
-    
+    public VariableValue visit(ExpressionUnary expr) {  
+        VariableValue right = evaluate(expr.getRight());
+
         switch (expr.getOperator().getType()) {
             case MINUS: // '-'
-                if (right instanceof Double) {
-                    return -((Double) right);
+                if (right.getValue() instanceof Double) {
+                    return new VariableValue(DataType.DOUBLE, -((Double) right.getValue()));
+                }
+                if (right.getValue() instanceof Integer) {
+                    return new VariableValue(DataType.INTEGER, -((Integer) right.getValue()));
                 }
                 throw new RuntimeException("El operando debe ser un número.");
             case BANG: // '!'
-                return !isTruthy(right);
+                return new VariableValue(DataType.BOOLEAN, !isTruthy(right.getValue()));
             default:
                 throw new RuntimeException("Operador unario desconocido.");
         }
     }
-    
+
     private boolean isTruthy(Object object) {
         if (object == null) return false;
         if (object instanceof Boolean) return (Boolean) object;
@@ -57,32 +68,49 @@ public class VisitorImplementationInterpreter implements ExpressionVisitor<Varia
     }
     
     @Override
-    public Object visit(ExpressionArit expr) {
-        Object left = evaluate(expr.getLeft());
-        Object right = evaluate(expr.getRight());
+    public VariableValue visit(ExpressionArit expr) {
+        VariableValue left = evaluate(expr.getLeft());
+        VariableValue right = evaluate(expr.getRight());
 
         switch (expr.getOperator().getType()) {
             case PLUS: // '+'	
-                if (left instanceof Double && right instanceof Double) {
-                    return (Double) left + (Double) right;
+                if (left.getValue() instanceof Double && right.getValue() instanceof Double) {
+                    return new VariableValue(DataType.DOUBLE, (Double) left.getValue() + (Double) right.getValue());
+            
                 }
+                if (left.getValue() instanceof Integer && right.getValue() instanceof Integer) {
+                    return new VariableValue(DataType.INTEGER, (Integer) left.getValue() + (Integer) right.getValue());
+                }
+
                 throw new RuntimeException("Los operandos de '+' deben ser números.");
             case MINUS: // '-'
-                if (left instanceof Double && right instanceof Double) {
-                    return (Double) left - (Double) right;
+                if (left.getValue() instanceof Double && right.getValue() instanceof Double) {
+                    return new VariableValue(DataType.DOUBLE, (Double) left.getValue() - (Double) right.getValue());
+                }
+                if (left.getValue() instanceof Integer && right.getValue() instanceof Integer) {
+                    return new VariableValue(DataType.INTEGER, (Integer) left.getValue() - (Integer) right.getValue());
                 }
                 throw new RuntimeException("Los operandos de '-' deben ser números.");
             case STAR: // '*'
-                if (left instanceof Double && right instanceof Double) {
-                    return (Double) left * (Double) right;
+                if (left.getValue() instanceof Double && right.getValue() instanceof Double) {
+                    return new VariableValue(DataType.DOUBLE, (Double) left.getValue() * (Double) right.getValue());
+                }
+                if (left.getValue() instanceof Integer && right.getValue() instanceof Integer) {
+                    return new VariableValue(DataType.INTEGER, (Integer) left.getValue() * (Integer) right.getValue());
                 }
                 throw new RuntimeException("Los operandos de '*' deben ser números.");
             case SLASH: // '/'
-                if (left instanceof Double && right instanceof Double) {
-                    if ((Double) right == 0) {
+                if (left.getValue() instanceof Double && right.getValue() instanceof Double) {
+                    if ((Double) right.getValue() == 0) {
                         throw new RuntimeException("División por cero.");
                     }
-                    return (Double) left / (Double) right;
+                    return new VariableValue(DataType.DOUBLE, (Double) left.getValue() / (Double) right.getValue());
+                }
+                if (left.getValue() instanceof Integer && right.getValue() instanceof Integer) {
+                    if ((Integer) right.getValue() == 0) {
+                        throw new RuntimeException("División por cero.");
+                    }
+                    return new VariableValue(DataType.INTEGER, (Integer) left.getValue() / (Integer) right.getValue());
                 }
                 throw new RuntimeException("Los operandos de '/' deben ser números.");
             default:
@@ -96,17 +124,23 @@ public class VisitorImplementationInterpreter implements ExpressionVisitor<Varia
     }
 
     @Override
-    public Object visit(ExpressionLogical expr) {
-        Object left = evaluate(expr.getLeft());
+    public VariableValue visit(ExpressionLogical expr) {
+        VariableValue left = evaluate(expr.getLeft());
 
         switch (expr.getOperator().getType()) {
             case OR: // '||'
-                if (isTruthy(left)) return true;
-                return isTruthy(evaluate(expr.getRight()));
+                if (isTruthy(left.getValue())) {
+                    return new VariableValue(DataType.BOOLEAN, true);
+                }
+                VariableValue right = evaluate(expr.getRight());
+                return new VariableValue(DataType.BOOLEAN, isTruthy(right.getValue()));
 
             case AND: // '&&'
-                if (!isTruthy(left)) return false;
-                return isTruthy(evaluate(expr.getRight()));
+                if (!isTruthy(left.getValue())) {
+                    return new VariableValue(DataType.BOOLEAN, false);
+                }
+                VariableValue rightAnd = evaluate(expr.getRight());
+                return new VariableValue(DataType.BOOLEAN, isTruthy(rightAnd.getValue()));
 
             default:
                 throw new RuntimeException("Operador lógico desconocido.");
@@ -114,49 +148,78 @@ public class VisitorImplementationInterpreter implements ExpressionVisitor<Varia
     }
 
     @Override
-    public Object visit(ExpressionLiteral expr) {
-        return expr.getValue();
+    public VariableValue visit(ExpressionLiteral expr) {
+        Object value = expr.getValue();
+        
+        // Determinar el tipo de dato basado en el valor
+        if (value instanceof Double) {
+            return new VariableValue(DataType.DOUBLE, value);
+        } else if (value instanceof Boolean) {
+            return new VariableValue(DataType.BOOLEAN, value);
+        } else if (value instanceof String) {
+            return new VariableValue(DataType.STRING, value);
+        } else if (value instanceof Integer) {
+            return new VariableValue(DataType.INTEGER, value);
+        } else if (value instanceof Character) {
+            return new VariableValue(DataType.CHAR, value);
+        } else if (value == null) {
+            return new VariableValue(DataType.VAR, null);
+        } else {
+            return new VariableValue(DataType.VAR, value);
+        }
     }
 
     @Override
-    public Object visit(ExpressionRelational expr) {
-        Object left = evaluate(expr.getLeft());
-        Object right = evaluate(expr.getRight());
+    public VariableValue visit(ExpressionRelational expr) {
+        VariableValue left = evaluate(expr.getLeft());
+        VariableValue right = evaluate(expr.getRight());
         
-        if (left == null || right == null) {
+        if (left.getValue() == null || right.getValue() == null) {
             throw new RuntimeException("No se pueden comparar valores nulos.");
         }
 
         switch (expr.getOperator().getType()) {
             case GREATER:  // >
-                if (left instanceof Double && right instanceof Double) {
-                    return (Double) left > (Double) right;
+                if (left.getValue() instanceof Double && right.getValue() instanceof Double) {
+                    return new VariableValue(DataType.BOOLEAN, (Double) left.getValue() > (Double) right.getValue());
+                }
+                if (left.getValue() instanceof Integer && right.getValue() instanceof Integer) {
+                    return new VariableValue(DataType.BOOLEAN, (Integer) left.getValue() > (Integer) right.getValue());
                 }
                 throw new RuntimeException("Los operandos de '>' deben ser números.");
                 
             case GREATER_EQUAL:  // >=
-                if (left instanceof Double && right instanceof Double) {
-                    return (Double) left >= (Double) right;
+                if (left.getValue() instanceof Double && right.getValue() instanceof Double) {
+                    return new VariableValue(DataType.BOOLEAN, (Double) left.getValue() >= (Double) right.getValue());
+                }
+                if (left.getValue() instanceof Integer && right.getValue() instanceof Integer) {
+                    return new VariableValue(DataType.BOOLEAN, (Integer) left.getValue() >= (Integer) right.getValue());
                 }
                 throw new RuntimeException("Los operandos de '>=' deben ser números.");
                 
             case LESS:  // <
-                if (left instanceof Double && right instanceof Double) {
-                    return (Double) left < (Double) right;
+                if (left.getValue() instanceof Double && right.getValue() instanceof Double) {
+                    return new VariableValue(DataType.BOOLEAN, (Double) left.getValue() < (Double) right.getValue());
+                }
+                if (left.getValue() instanceof Integer && right.getValue() instanceof Integer) {
+                    return new VariableValue(DataType.BOOLEAN, (Integer) left.getValue() < (Integer) right.getValue());
                 }
                 throw new RuntimeException("Los operandos de '<' deben ser números.");
                 
             case LESS_EQUAL:  // <=
-                if (left instanceof Double && right instanceof Double) {
-                    return (Double) left <= (Double) right;
+                if (left.getValue() instanceof Double && right.getValue() instanceof Double) {
+                    return new VariableValue(DataType.BOOLEAN, (Double) left.getValue() <= (Double) right.getValue());
+                }
+                if (left.getValue() instanceof Integer && right.getValue() instanceof Integer) {
+                    return new VariableValue(DataType.BOOLEAN, (Integer) left.getValue() <= (Integer) right.getValue());
                 }
                 throw new RuntimeException("Los operandos de '<=' deben ser números.");
                 
             case EQUAL_EQUAL:  // ==
-                return isEqual(left, right);
+                return new VariableValue(DataType.BOOLEAN, isEqual(left.getValue(), right.getValue()));
                 
             case BANG_EQUAL:  // !=
-                return !isEqual(left, right);
+                return new VariableValue(DataType.BOOLEAN, !isEqual(left.getValue(), right.getValue()));
                 
             default:
                 throw new RuntimeException("Operador relacional desconocido.");
@@ -262,5 +325,123 @@ public class VisitorImplementationInterpreter implements ExpressionVisitor<Varia
         }
         
         throw new ReturnException(returnValue);
+    }
+
+    @Override
+    public Void visit(StatementBoolean statement) {
+        VariableValue value = null;
+        
+        if (statement.getInitializer() != null) {
+            value = evaluate(statement.getInitializer());
+            
+            if (!(value.getValue() instanceof Boolean)) {
+                throw new RuntimeException("El valor asignado a una variable boolean debe ser de tipo boolean.");
+            }
+        } else {
+            value = new VariableValue(DataType.BOOLEAN, false);
+        }
+        
+        String variableName = ((Token.Indetifier)statement.getIdentifier()).getLexeme();
+        environment.defineVariable(variableName, value);
+        
+        return null;
+    }
+
+    @Override
+    public Void visit(StatementChar statement) {
+        VariableValue value = null;
+        
+        if (statement.getInitializer() != null) {
+            value = evaluate(statement.getInitializer());
+            
+            if (!(value.getValue() instanceof Character)) {
+                throw new RuntimeException("El valor asignado a una variable char debe ser de tipo char.");
+            }
+        } else {
+            value = new VariableValue(DataType.CHAR, '\0');
+        }
+        
+        String variableName = ((Token.Indetifier)statement.getIdentifier()).getLexeme();
+        environment.defineVariable(variableName, value);
+        
+        return null;
+    }
+
+    @Override
+    public Void visit(StatementDouble statement) {
+        VariableValue value = null;
+        
+        if (statement.getInitializer() != null) {
+            value = evaluate(statement.getInitializer());
+            
+            if (!(value.getValue() instanceof Double)) {
+                throw new RuntimeException("El valor asignado a una variable double debe ser de tipo double.");
+            }
+        } else {
+            value = new VariableValue(DataType.DOUBLE, 0.0);
+        }
+        
+        String variableName = ((Token.Indetifier)statement.getIdentifier()).getLexeme();
+        environment.defineVariable(variableName, value);
+        
+        return null;
+    }
+
+    @Override
+    public Void visit(StatementInteger statement) {
+        VariableValue value = null;
+        
+        if (statement.getInitializer() != null) {
+            value = evaluate(statement.getInitializer());
+            
+            if (!(value.getValue() instanceof Integer)) {
+                throw new RuntimeException("El valor asignado a una variable integer debe ser de tipo integer.");
+            }
+        } else {
+            value = new VariableValue(DataType.INTEGER, 0);
+        }
+        
+        String variableName = ((Token.Indetifier)statement.getIdentifier()).getLexeme();
+        environment.defineVariable(variableName, value);
+        
+        return null;
+    }
+
+    @Override
+    public Void visit(StatementString statement) {
+        VariableValue value = null;
+        
+        if (statement.getInitializer() != null) {
+            value = evaluate(statement.getInitializer());
+            
+            if (!(value.getValue() instanceof String)) {
+                throw new RuntimeException("El valor asignado a una variable string debe ser de tipo string.");
+            }
+        } else {
+            value = new VariableValue(DataType.STRING, "");
+        }
+        
+        String variableName = ((Token.Indetifier)statement.getIdentifier()).getLexeme();
+        environment.defineVariable(variableName, value);
+        
+        return null;
+    }
+
+    @Override
+    public Void visit(StatementExpression statement) {
+        evaluate(statement.getExpression());
+        return null;
+    }
+
+    @Override
+    public Void visit(StatementPrint statement) {
+        VariableValue value = evaluate(statement.getExpression());
+        if (value != null) {
+            System.out.println(value.getValue());
+        } else {
+            System.out.println("null");
+        }
+        
+        return null;
     }
 }
