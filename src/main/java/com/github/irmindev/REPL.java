@@ -1,10 +1,17 @@
 package com.github.irmindev;
 import java.io.*;
+import java.util.List;
 
 import com.github.irmindev.controller.Lexer;
 import com.github.irmindev.controller.Parser;
+import com.github.irmindev.model.Environment;
+import com.github.irmindev.model.VisitorImplementationInterpreter;
+import com.github.irmindev.model.statements.Statement;
 
 public class REPL {
+    private static Environment environment = new Environment();    
+    private static VisitorImplementationInterpreter visitor = new VisitorImplementationInterpreter(environment, environment);
+
     public static void main(String[] args) {
         if (args.length == 0) {
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
@@ -34,8 +41,14 @@ public class REPL {
     private static void execute(String s) {
         Lexer lexer = new Lexer(s);
         Parser parser = new Parser(lexer.scanTokens());
-        parser.parse();
-        System.out.println("Parsed successfully!");
+        List<Statement> program = parser.parse();   
+        for (Statement statement : program) {
+            try {
+                statement.accept(visitor);
+            } catch (Exception e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+        }
     }
 
     public static String readFile(String path) throws FileNotFoundException {

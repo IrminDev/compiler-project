@@ -72,9 +72,10 @@ public class Parser {
    * Parses the tokens and builds an abstract syntax tree (AST) **PENDING.
    * This method is the top-level entry point for parsing the tokens.
    */
-  public void parse() {
-    program();
+  public List<Statement> parse() {
+    List<Statement> stms = program();
     match(TokenType.EOF);
+    return stms;
   }
 
   /**
@@ -101,7 +102,7 @@ public class Parser {
       default:
         if (statementTokens.contains(tokens.get(currentTokenIndex).getType())
           || expressionTokens.contains(tokens.get(currentTokenIndex).getType())) {
-          statement();
+          statements.add(statement());
           declaration(statements);
         }
         break;
@@ -384,10 +385,10 @@ public class Parser {
 
   private Expression assignmentOpc(Expression left) {
     if (TokenType.EQUAL.equals(tokens.get(currentTokenIndex).getType())) {
-      match(TokenType.EQUAL);
       Token name = previous();
+      match(TokenType.EQUAL);
       Expression value = logicOr();
-      return assignmentOpc(new ExpressionAssign(name, value ));
+      return assignmentOpc(new ExpressionAssign(name, value));
     }
     return left;
   }

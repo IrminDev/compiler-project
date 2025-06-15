@@ -24,6 +24,7 @@ import com.github.irmindev.model.statements.StatementChar;
 import com.github.irmindev.model.statements.StatementDouble;
 import com.github.irmindev.model.statements.StatementInteger;
 import com.github.irmindev.model.statements.StatementString;
+import com.github.irmindev.model.statements.StatementVar;
 import com.github.irmindev.model.statements.StatementExpression;
 import com.github.irmindev.model.statements.StatementPrint;
 
@@ -80,6 +81,10 @@ public class VisitorImplementationInterpreter implements ExpressionVisitor<Varia
                 }
                 if (left.getValue() instanceof Integer && right.getValue() instanceof Integer) {
                     return new VariableValue(DataType.INTEGER, (Integer) left.getValue() + (Integer) right.getValue());
+                }
+
+                if (left.getValue() instanceof String || right.getValue() instanceof String) {
+                    return new VariableValue(DataType.STRING, (String) left.getValue() + (String) right.getValue());
                 }
 
                 throw new RuntimeException("Los operandos de '+' deben ser números.");
@@ -242,11 +247,14 @@ public class VisitorImplementationInterpreter implements ExpressionVisitor<Varia
     }
 
     @Override
-    public Object visit(ExpressionAssign expression) {
+    public VariableValue visit(ExpressionAssign expression) {
         Object value = evaluate(expression.getValue());
-        VariableValue variable;
+        VariableValue variable = environment.getVariable(((Token.Indetifier)expression.getName()).getLexeme());
+        if (variable == null) {
+            throw new RuntimeException("Variable no definida: " + ((Token.Indetifier)expression.getName()).getLexeme());
+        }
         environment.assignValue(((Token.Indetifier)expression.getName()).getLexeme(), (VariableValue) value);
-        return value;
+        return variable;
     }
 
     @Override
@@ -442,6 +450,23 @@ public class VisitorImplementationInterpreter implements ExpressionVisitor<Varia
             System.out.println("null");
         }
         
+        return null;
+    }
+
+    @Override
+    public Void visit(StatementVar statement) {
+        VariableValue value = null;
+
+        if (statement.getInitializer() != null) {
+            value = evaluate(statement.getInitializer());
+            value.setType(DataType.VAR);
+        } else {
+            value = new VariableValue(DataType.VAR, null);
+        }
+
+        String variableName = ((Token.Indetifier)statement.getIdentifier()).getLexeme();
+        environment.defineVariable(variableName, value);
+
         return null;
     }
 }

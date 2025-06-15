@@ -32,9 +32,10 @@ public class Environment {
 
     public void assignValue(String name, VariableValue value) {
         if (variables.containsKey(name)) {
-            if(variables.get(name).getType().equals(value.getType())
-                || variables.get(name).getType().equals(DataType.VAR)
-            ){
+            if(variables.get(name).getType().equals(value.getType())){
+                variables.put(name, value);
+            } else if(variables.get(name).getType().equals(DataType.VAR)){
+                value.setType(DataType.VAR);
                 variables.put(name, value);
             } else {
                 throw new RuntimeException("Type mismatch for variable " + name + ": expected " + variables.get(name).getType() + " but got " + value.getType());
