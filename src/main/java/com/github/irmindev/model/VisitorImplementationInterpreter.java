@@ -77,10 +77,14 @@ public class VisitorImplementationInterpreter implements ExpressionVisitor<Varia
             case PLUS: // '+'	
                 if (left.getValue() instanceof Double && right.getValue() instanceof Double) {
                     return new VariableValue(DataType.DOUBLE, (Double) left.getValue() + (Double) right.getValue());
-            
                 }
                 if (left.getValue() instanceof Integer && right.getValue() instanceof Integer) {
                     return new VariableValue(DataType.INTEGER, (Integer) left.getValue() + (Integer) right.getValue());
+                }
+                if(left.getValue() instanceof Integer && right.getValue() instanceof Double ||
+                   left.getValue() instanceof Double && right.getValue() instanceof Integer) {
+                    return new VariableValue(DataType.DOUBLE, 
+                        ((Number) left.getValue()).doubleValue() + ((Number) right.getValue()).doubleValue());
                 }
 
                 if (left.getValue() instanceof String || right.getValue() instanceof String) {
@@ -292,8 +296,8 @@ public class VisitorImplementationInterpreter implements ExpressionVisitor<Varia
     
     @Override
     public Void visit(StatementIf statement) {
-        Object condition = evaluate(statement.getCondition());
-        if (isTruthy(condition)) {
+        VariableValue condition = evaluate(statement.getCondition());
+        if ((Boolean)condition.getValue()) {
             statement.getBlock().accept(this);
         } else if (statement.getElseBlock() != null) {
             statement.getElseBlock().accept(this);
@@ -312,7 +316,7 @@ public class VisitorImplementationInterpreter implements ExpressionVisitor<Varia
 
     @Override
     public Void visit(StatementLoop statement) {
-        while (isTruthy(evaluate(statement.getCondition()))) {
+        while ((Boolean)evaluate(statement.getCondition()).getValue()) {
             statement.getBlock().accept(this);
         }
         return null;

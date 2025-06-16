@@ -4,3 +4,4 @@ fun hola() {
 }
 
 print "Esto está afuera";
+hola();
